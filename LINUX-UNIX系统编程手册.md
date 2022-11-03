@@ -1,4 +1,18 @@
-## 系统文件I/O
+>文件IO（第4章、第5章、第13章）
+文件系统（第14章、第15章、第18章）
+进程控制（第6章、第24章到第27章、第34章到第37章）
+信号（第20章、第21章、第22章）
+定时器与休眠（第23章）
+线程（第29章到第33章）
+IO多路复用（重点学epoll）
+进程间通信
+网络编程
+********************************************************
+    2,3                  --略读
+
+    4,5.2-5.5,15,18  --重点
+********************************************************
+## 系统文件IO
 所有执行I/O操作的系统调用都以文件描述符,来指代打开的文件.针对每个进程文件描述符都自成一套  
 大多数程序都期望使用3种文件描述符  
 文件描述符|用途|POSIX名称|stdio流
@@ -8,9 +22,8 @@
    3|标准错误|STDERR_FILENO|stderr
 
 在程序中指代这些文件描述符时,可以使用数字(012)表示,或采用<unistd.h>定义的标准名称  
-### **执行文件 I/O 操作的主要系统调用**
+### **执行文件 I/O 操作的 4 个主要系统调用**
 > 编程语言和软件包通常会利用 I/O 函数库对它们进行间接调用  
-**open()write()read()close()**<---主要的系统调用函数
 #### ***fd = open(pathname,flags,mode);***  
 函数打开pathname所标识的文件,并返回文件描述符  
 用以在后续函数中指代打开的文件.如果文件不存在，open()函数可以创建之，这取决于对位掩码参数 flags 的设置。flags 参数还可指定文件的打开方式：只读、只写亦或是读写方式。mode 参数则指定了由 open()调用创建文件的访问权限，如果 open()函数并未创建文件，那么可以忽略或省略 mode 参数  
@@ -229,24 +242,21 @@ int main(int argc ,char** argv)
 2. **int fcntl ( int fd , int cmd , long arg ) ;**
 3. **int fcntl( int fd , int cmd , struct * lock) ;** 
 
-
 fcntl()有5种功能 :
-*   1. **复制一个现有的描述符**(cmd=F_DUPFD)  
-*    2. **获得/设置文件描述符标记**(cmd=F_GETFD或F_SETFD)
- *   3. **获得/设置文件状态标记**(cmd=F_GETFL或F_SETFL)
-  *  4. **获得/异步I/O所有权**(cmd=F_GETOWN或F_SETOWN)
-   * 5. **获得/设置记录锁**(cmd=F_GETLK,F_SETLK或F_SETLKW)
-   
+*   1. 复制一个现有的描述符(cmd=F_DUPFD)  
+*    2. 获得/设置文件描述符标记(cmd=F_GETFD或F_SETFD)
+ *   3. 获得/设置文件状态标记(cmd=F_GETFL或F_SETFL)
+  *  4. 获得/异步I/O所有权(cmd=F_GETOWN或F_SETOWN)
+   * 5. 获得/设置记录锁(cmd=F_GETLK,F_SETLK或F_SETLKW)
 
 描述: **fcntl()针对文件描述符提供控制**,参数fd是被参数cmd操作的描述符;  
 针对cmd的值,fcntl能接受第三个参数(arg)  
 
 * int fcntl(int fd,int cmd, ... )  
-``((#include<fcntl.h>)RETURN on success depends on cmd , or -1 on error) `` 
+((#include<fcntl.h>)RETURN on success depends on cmd , or -1 on error)  
 cmd参数所支持的操作范围很广 . fcntl()的第三个参数以省略号来表示，这意味着可以将其设置为不同的类型，或者加以省略。内核会依据 cmd 参数（如果有的话）的值来确定该参数的数据类型  
 fcntl的用途之一是针对一个打开的文件,获取或修改其访问模式和状态表示,这些值是通过open()函数的flag参数来设置的. 要获取这些设置,应将fcnlt()的cmd参数设置为F_GETFL  
 > 针对一个打开的文件，只有通过 open()或后续 fcntl()的 F_SETFL 操作，才能对该文件的状态标志进行设置  
-
 判定文件的访问模式有一点复杂，这是因为 O_RDONLY(0)、O_WRONLY(1)和 O_RDWR(2)这 3 个常量并不与打开文件状态标志中的单个比特位对应。因此，要判定访问模式，需使用掩码 O_ACCMODE 与 flag 相与，将结果与 3 个常量进行比对，
 ```c
 int flag,accessMode ;
@@ -271,7 +281,7 @@ if(accessMode==O_WRONLY || accessMode == O_RDWR)
 两个不同的文件描述符,若指向同一打开文件句柄,将共享同一文件偏移量.因此,若通过其中的
 
 #### 复制一个现存的文件描述符。
-##### **dup/dup2函数**:  
+dup/dup2函数:  
 ```c
 #include <unistd.h> 
 int dup(int oldfd);
@@ -284,7 +294,7 @@ int dup2(int oldfd, int newfd);
 
 实际上，
 dup(oldfd) == fcntl(oldfd, F_DUPFD,0);
-dup2(oldfd, newfd) == close(newfd);fcntl(oldfd, F_DUPFD,newfd);
+dup2(oldfd, newfd) == close(oldfd);fcntl(oldfd, F_DUPFD,newfd);
 
 #### 在文件特定偏移量处IO:pread()/pwrite()  
 *并非文件指针所在,而在调用时的输入的偏移量处*
@@ -393,7 +403,7 @@ fd=dup(1);
 !!! /dev/fd 实际上是一个符号链接，链接到 Linux 所专有的/proc/self/fd 目录。后者又是 Linux特有的/proc/PID/fd 目录族的特例之一，此目录族中的每一目录都包含有符号链接，与一进程所打开的所有文件相对应。
 ***
 没看太懂
-***
+
 程序中很少会使用/dev/fd 目录中的文件。其主要用途在 shell 中。许多用户级 shell 命令将文件名作为参数，有时需要将命令输出至管道，并将某个参数替换为标准输入或标准输出。
 出于这一目的，有些命令（例如，diff、ed、tar 和 comm）提供了一个解决方法，使用“-”符号作为命令的参数之一，用以表示标准输入或输出（视情况而定）。所以，要比较 ls 命令输出的文件名列表与之前生成的文件名列表，命令就可以写成：
 `$ ls | diff -oldfilelist`
@@ -404,13 +414,11 @@ fd=dup(1);
 #### 创建临时文件 
 很多程序需要创建一些临时文件,仅供其在运行期间使用,程序终止后即删除. 
 例如: mkstemp()和tmpfile()。
-##### mkstemp()
 ```c
 #include <stdlib.h>
 int mkstemp(char *template);
 ```
 !!! 模板参数采用路径名形式，其中最后 6 个字符必须为 XXXXXX。这 6 个字符将被替换，以保证文件名的唯一性，且修改后的字符串将通过 template 参数传回。因为会对传入的 template参数进行修改，所以必须将其指定为字符数组，而非字符串常量. 
-
 文件拥有者对mkstemp()函数建立的文件拥有读写权限(其他用户没有任何权限),且打开文件时使用了O_EXCL标志,以保证调用者以独占的方式访问文件.   
 
 通常打开临时文件不久,程序就会使用unlink系统调用将其删除
@@ -426,9 +434,8 @@ unlink(templateHahahahaha);
 
 if(close(fd)==-1)  errExit("close");
 ``` 
-##### tmpfile()
 * tmpfile()函数会创建一个名称唯一的临时文件,并以读写进行打开(flag包含O_EXCL标志,以防另一个进程创建了一个同名文件)
-```c
+```
 #include<stdio.h>
 FILE *tmpfile(void)
 ```
@@ -450,9 +457,7 @@ tmpfile()函数执行成功，将返回一个文件流供 stdio 库函数使用�
 
 运用虚拟目录/dev/fd 中的编号文件，进程就可以通过文件描述符编号来访问自己打开的文件，这在 shell 命令中尤其有用。
 
-**mkstemp()和 tmpfile()函数允许应用程序去创建临时文件 用unlink来销毁**
-
-
+**mkstemp()和 tmpfile()函数允许应用程序去创建临时文件**
 ### 文件I/O---->缓冲
 #### 文件IO的内核缓冲:缓冲区高速缓存 
 read()和write()**系统调用在操作磁盘文件时不会直接发起磁盘访问,而是在用户缓冲区与内核缓冲区高速缓存之间复制数据**  
@@ -586,3 +591,466 @@ FILE* fdopen(int fd,const char * mode);
 在 Linux 环境下，open()所特有的 O_DIRECT 标识允许特定应用跳过缓冲区高速缓存。
 
 在对同一个文件执行 I/O 操作时，**fileno()和 fdopen()有助于系统调用和标准 C 语言库函数的混合使用**。给定一个流，fileno()将返回相应的文件描述符，fdopen()则反其道而行之，针对指定的打开文件描述符创建一个新的流。
+
+***
+## 系统编程
+###  系统编程概念
+#### 文件系统结构 
+图示磁盘分区和文件系统之间的关系,以及一般文件系统的组成
+![截图 2022-10-19 11-47-22.png](https://s2.loli.net/2022/10/19/zFBw48TyZjn5DVe.png)
+文件系统由以下部分组成 
+##### 引导块 
+作为文件系统的首块.引导块不为文件系统所用,只是包含引导操作系统的信息.操作系统只需要一个引导块,但所有文件系统都设有引导块
+##### 超级块
+紧随引导块之后的一个独立块,包含文件系统有关的参数信息,其中包括:>
+* -i 节点容量
+* \- 文件系统中的逻辑块大小;
+* \- 以逻辑块计,文件系统的大小;  
+驻留于同一物理设备上的不同文件系统,其类型.大小以及参数设置(块大小...)都可以有所不同.这也是将一块磁盘划分为多个分区的原因
+- \- i节点表: 文件系统的每个文件和目录在i节点表中都对应着唯一一条记录,这条记录登记了关乎文件的各种信息有时节点表称之为i-list 
+- \- 数据块:文件系统的大部分空间都用于存放数据,以构成驻留于文件系统之上的文件与目录.
+#### i 节点
+针对驻留于文件系统上的每个文件，文件系统的 i 节点表会包含一个 i 节点（索引节点的简称）。对 i 节点的标识，采用的是 i 节点表中的顺续位置，以数字表示。文件的 i 节点号（或简称为 i 号）是 ls –li 命令所显示的第一列。
+`ls -li`-----* **3283416** drwxr-xr-x 5 **** **** 4096 10月 18 22:23 Desktop*
+
+##### **i(-node) 节点所维护的信息如下所示** 
+
+- **文件类型**(常规文件.目录.符号链接.以及字符设备...)
+- **文件属主**(UID 也称 用户ID)
+- **文件属组**(GID 也称  组ID)
+- **3类文件访问权限**  [ 属主（有时也称为用户）、属组 、其他用户（属主和属组用户之外的用户）]
+- **3个时间戳**: 对文件最后的访问时间(ls -lu) 、对文件最后的修改时间(ls -l(默认显示)) 、以及文件状态最后改变的时间(ls -lc)  
+- **指向文件的硬链接的数量**
+- **文件的大小,以字节为单位** 
+- **实际分配给文件块的数量**,以512字节块为单位.不会简单等于文件的大小,有文件空洞的存在(分配给文件的块数可能要低于文件的正常大小所计算出的块数)  
+- **指向文件数据块的指针** 
+
+#### ext2 中的i-node(节点)和数据块指针
+类似于大多数 UNIX 文件系统，ext2 文件系统在存储文件时，数据块不一定连续，甚至不一定按顺序存放（尽管 ext2 会尝试将数据块彼此靠近存储）。为了定位文件数据块，内核在 i 节点内维护有一组指针。下图所示为在 ext2 文件系统上完成上述任务的情况
+![截图 2022-10-19 11-47-22.png](https://s2.loli.net/2022/10/19/zFBw48TyZjn5DVe.png)
+> 碎片化的存储方式 使得对磁盘的文件利用的效率更高
+
+这一貌似复杂的系统，其设计意图是为了满足多重需求。首先，该系统在维持 i 节点结构大小固定的同时，支持任意大小的文件。其次，文件系统既可以以不连续方式来存储文件块，又可通过 lseek()随机访问文件，而内核只需计算所要遵循的指针。最后，对于在大多数系统中占绝对多数的小文件而言，这种设计满足了对文件数据块的快速访问：通过 i 节点的直接指针访问，一击必中。
+
+#### 虚拟文件系统(vfs)
+虚拟文件系统VFS 定义了一套借口.即使所有与文件交互的程序都会按照这一接口来进行操作  
+每种文件系统都会提供VFS接口的实现  
+这样以来 程序只需要理解VFS结口,而无需具体关心实现细节  
+VFS接口的操作涉及文件系统和目录的所有常规系统调用相对应.
+- 这些调用都有open() read() write() lseek() close() truncate() stat() mount() unmount() mmap() mkdir() link() unlink() symlink() rename()
+```cpp
+ mount() 挂载系统
+ umount() 卸载文件系统
+ //这俩没整明白咋搞的,应该不咋用吧...
+```
+VFS的抽象层建模精确仿照传统UNIX文件系统模型.当然,还有一些文件系统,尤其是非UNIX文件系统并不支持所有的VFS操作(微软不支持symlink()创建的链接概念)
+### 文件属性
+本章将探讨文件的各种属性（文件元数据）。首先介绍的是系统调用 stat()，可利用其返回一个包含多种文件属性的结构。然后，将描述用来改变文件属性的各种系统调用本章将在结尾处讨论 i 节点标志（也称为 ext2 扩展文件属性），可利用其控制内核对文件处理的方方面面
+#### stat() 获取文件信息
+利用系统调用stat() \ lstat() \ fstat() 可以获取文件有关的信息,其中大部分提取自文件i节点  
+
+```c
+#include<sys/stat.h>
+
+int stat(const char * pathname,struct stat * stabuf);
+int lstat(const char * pathname,struct stat * stabuf);
+int fstat(int fd ,struct stat * stabuf);
+
+```
+- stat() 会返回所命名文件名的相关信息.
+- lstat()与stat()类似, 区别在如果文件属于符号链接,那么返回的信息针对的是符号链接本身
+- fstat() 则会返回某个文件打开符所指代文件的相关信息  
+
+系统调用**stat()和lstat()**无需对其操作文件本身拥有任何权限, **但针对指定的pathname的父目录要有操作权限**
+但对于**fstat() 只需要提供有效的文件描述符**   
+
+上述所有结构都会在缓冲区返回一个statbuf 指向的stat结构
+```c
+其结构如下
+//! 需要包含de头文件
+#include <sys/types.h>
+#include <sys/stat.h> 
+int stat(const char *filename, struct stat *buf); //! prototype,原型 
+ 
+struct stat
+{
+    dev_t       st_dev;     /* ID of device containing file     -文件所在设备的ID               */
+    ino_t       st_ino;     /* inode number                     -inode节点号                   */
+    mode_t      st_mode;    /* file type and permissions        -文件的类型                     */
+    nlink_t     st_nlink;   /* number of hard links             -链向此文件的连接数(硬连接)       */
+    uid_t       st_uid;     /* user ID of owner                 -user id                      */
+    gid_t       st_gid;     /* group ID of owner                - group id                    */
+    dev_t       st_rdev;    /* device ID (if special file)      -设备号,针对设备文件             */
+    off_t       st_size;    /* total size, in bytes             -文件大小,字节为单位             */
+    blksize_t   st_blksize; /* blocksize for filesystem I/O     -系统块的大小                   */
+    blkcnt_t    st_blocks;  /* number of blocks allocated       -文件所占块数                   */
+    time_t      st_atime;   /* time of last access              -上次访问时间                   */
+    time_t      st_mtime;   /* time of last modification        -上次修改时间                   */
+    time_t      st_ctime;   /* time of last status change       -文件状态上次修改时间             */
+};
+```
+##### stat(详细介绍)
+- st_dev 和 st_ino  
+    - st_dev 字段标识文件所驻留的设备。st_ino 字段则包含了文件的 i 节点号。利用以上两者，可在所有文件系统中唯一标识某个文件
+    - dev_t 类型记录了设备的主、辅 ID。如果是针对设备的 i 节点，那么 st_rdev 字段则包含设备的主、辅 ID
+- st_uid 和 st_gid
+    - 其分别识别文件的属主和属组(用户ID 组ID)
+- st_nlink
+    - 包含了文件的硬链接数
+- st_mode
+    - 字段内包含掩码,起标识文件类型 和 指定文件权限的双重作用
+    与常量S_IFMT相与(&),可从字段中析取文件类型(Linux 使用st_mode字段中的4位来标识文件类型)
+    ![截图 2022-10-19 17-04-41.png](https://s2.loli.net/2022/10/19/BIzaATwgdhKx5LF.png)
+    在判断类型的时候 可以使用上图的宏(<sys/stat.h>)
+- st_*time 
+    - 时间变化记录
+#### 文件时间戳
+##### 使用utime()和utimes()来改变文件时间戳
+
+```c
+#include<utime.h>
+//定义结构体
+struct utimbuf {
+    time_t actime;
+    time_t modtime;
+}
+struct timeval {
+    time_t tv_sec;
+    suseconds_t tv_usec;
+}
+
+int utime(const char *pathname, const struct utimbuf* buf);
+        Returns 0 on success,-1 on error
+int utimes(const char *pathname, const struct timeval tv[2]);//268
+```
+参数 pathname 用来标识欲修改时间的文件。若该参数为符号链接，则会进一步解除引用。
+### 目录与链接
+#### 目录和(硬)链接
+在文件系统中,目录的存储方式类似于普通文件,但目录与普通文件的区别有二
+- i-node中,目录会是一种不同的文件类型
+- 目录是经特殊组织形成的文件,本质是一个表格,包含文件名和i-node编号  
+
+> 进程能够大开一个目录,但不能read()读取目录的内容,检索目录的内容,进程必须使用后面的系统的调用和库函数. 
+> 同理进程也不能使用write()来改变目录的内容,仅能借助于open()函数 link()函数 
+
+>i-node表的编号始于1 而非0，因为若i-node字段值为0，则表明该条目尚未使用。 i-node 1 用来记录文件系统的坏快 。文件根目录总是储存在i-node条目2中，如下图 所以内核在解析路径名时就知道从哪里下手
+![截图 2022-10-20 09-30-31.png](https://s2.loli.net/2022/10/20/AcgF8V49OblaQqn.png)
+
+回顾文件i-node中存储的信息,会发现未包含文件名,仅通过目录列表内的一个映射来定义文件名. 其妙用在于，能够在相同或者不同目录中创建多个名称，每个均指向相同的 i-node 节点。也将这些名称称为链接，有时也称之为硬链接
+:> **ln** 命令
+![截图 2022-10-20 09-40-03.png](https://s2.loli.net/2022/10/20/TZFwp5JnzE1RQXC.png)
+> 如图 现在指向该文件的有两个名字。（由于指向相同的 i-node，针对文件 xyz 输出的链接计数也是 2
+
+若移除其中一个文件名,另一文件名以及文件本身将继续存在 
+当i-node的链接计数降为0时,也就是移除了所用的名字,才会释放i-node的内存
+> 在线论坛上经常会有这样的问题出现：在程序中如何找到与文件描述符 X 相关联的文件名？简单的回答是不能，至少缺乏明确而又便于移植的手段，因为一个文件描述符指向一个i-node，而指向这个 i-node 的文件名则可能有多个
+
+对于硬链接的限制有二 均可使用符号链接加以规避
+- 因为目录条目(硬链接)对文件的指代采用了i-node编号,而i-node编号的唯一性仅在一个文件系统之内才能得到保障,所以硬链接要与文件驻留在同一定义文件系统
+- 不能为目录创建链接,从而避免出现令诸多系统程序陷于混乱的链接环路  
+#### 符号链接(软链接)
+符号链接,有时也称为软链接，是一种特殊的文件类型，其数据是另一文件的名称。图 18-2 展示的情况是：两个硬链接—/home/erena/this 和/home/allyn/that—指向同一个文件，而符号链接/home/kiran/other，则指代文件名/home/erena/this。
+在shell中，符号链接是由ln-s创建的。ls-F的命令输出会在符号链接的尾部标记 @ 。
+符号连接的内容可以是绝对路径，也可以是相对路径。解释相对符号链接时以链接本身的位置作为参照点。
+符号链接的地位不如硬链接。尤其是，文件的链接计数中并未将符号链接计算在内因此，如果移除了符号链接所指向的文件名，符号链接本身还将继续存在，尽管无法再对其进行解引用（下溯）操作，也将此类链接称之为悬空链接。更有甚者，还可以为并不存在的文件名创建一个符号链接。
+#### 系统调用对符号链接的解释
+诸多系统调用都会对符号链接进行解引用处理，从而对链接指向的文件展开操作，还有一些系统调用对符号链接则不作处理，直接操作于链接文件本身。书中会在论及每个系统调用的同时，描述其针对符号链接的行为。（Linux_UNIX系统编程手册--P286）
+#### 创建和移除(硬)链接--link()和unlink()
+link()和unlink()系统调用分别创建和移除硬链接.
+##### link()
+```c
+#include<unistd.h>
+int link(const char* oldpath,const char* newpath);
+                return 0 on success;-1 on error
+```
+oldpath中提供的是一个已经存在的路径名,则系统调用link()将newpath参数所指向的路径名创建一个新链接.若newpath指定的路径名已然存在,则不会将其覆盖;相反会产生一个error;
+> 在 Linux 中，link()系统调用不会对符号链接进行解引用操作。若 oldpath 属于符号链接，则会将 newpath 创建为指向相同符号链接文件的全新硬链接。（换言之，newpath 也是符号链接，指向 oldpath 所指代的同一文件。）这一行为有悖于 SUSv3 规范。SUSv3 要求，除非另行规定（link()系统调用不在此列），否则所有执行路径名解析操作的函数都应对符号链接进行解引用。大多数其他 UNIX 实现的行事方式都与 SUSv3 相符。值得注意的是，Solaris 是个例外，默认情况下的行为与 Linux 相同。但若采用适当的编译器选项，又可提供符合 SUSv3 规范的行为。鉴于系统实现间的这种差异，应避免将 oldpath 参数指定为符号链接，以保障程序的可移植性。
+##### unlink()
+```c
+#include <unistd.h>
+int unlink(const char *pathname);
+                    RETURN 0 ON SUCCESS;-1 ON error
+```
+unlink()系统调用移除一个链接（删除一个文件名），且如果此链接是指向文件的最后一个链接，那么还将移除文件本身。若 pathname 中指定的链接不存在，则 unlink()调用失败，并将errno 置为 ENOENT
+##### 仅当关闭所有文件描述符时，可删除一个已打开的文件
+当移除指向文件的最后一个链接时，如果仍有进程持有指代该文件的打开文件描述符，那么在关闭所有此类描述符之前，系统实际上将不会删除该文件。这一特性的妙用在于允许取消对文件的链接，而无需担心是否有其他进程已将其打开。（然而，对于链接数已降为 0 的打开文件，就无法将文件名与其重新关联起来。）此外，基于上述事实，还可以玩点小技巧：先创建并打开一个临时文件，随即取消对文件的链接（unlink），然后在程序中继续使用该文件。
+（这正是 5.12 节所述 tmpfile()函数的所作所为。）
+#### 更改文件名 : rename()
+借助于rename()既可以重命名文件,又可以将文件移动至同一文件系统的另一目录.
+```c
+#include<stdio.h>
+int rename(const char* oldpath,const char*newpath);
+                return 0 on success; -1 on error
+```
+该系统调用会将现有的一个路径名oldpath重命名为newpath参数指定的路径名。
+rename()调用仅操作目录条目，而不移动文件数据 
+- :> !!! 注意 !!!
+    - **若 newpath 已经存在，则将其覆盖**。
+    - **若 newpath 与 oldpath 指向同一文件，则不发生变化（且调用成功）**
+    - **rename()系统调用对其两个参数中的符号链接均不进行解引用。**如果 oldpath 是一符号链接，那么将重命名该符号链接。如果 newpath 是一符号链接，那么会将其视为由oldpath 重命名而成的普通路径名
+    - **如果 oldpath 指代文件，而非目录，那么就不能将 newpath 指定为一个目录的路径名**（否则将 errno 置为 EISDIR）
+    如下调用既将一个文件移动到另一目录中，同时又将其改名：
+    `rename("a/wang1.txt","b/wang2.txt");`
+    - 若将 **oldpath 指定为目录名，则意在重命名该目录**。**这种情况下，必须保证 newpth 要么不存在，要么是一个空目录的名称**
+    - **若 oldpath 是一目录，则 newpath 不能包含 oldpath 作为其目录前缀**
+    - **oldpath 和 newpath 所指代的文件必须位于同一文件系统。**
+#### 使用符号连接: symlink()和readlink()
+##### symlink()
+symlink()系统调用会针对filepath所指定的路径名创建一个新的符号链接--linkpath. (移除符号链接,需使用unlink() )
+```c
+#include<unistd.h>
+int symlink(const char *filepath,const char *linkpath);
+                return 0 on success, or -1 on error
+```
+! 若linkpath 中给定的路径名已然存在,则调用失败(且将error设置为EEXIST).filepath指定的路径名可以是绝对路径,也可以是相对路径.
+由 filepath 所命名的文件或目录在调用时无需存在。即便当时存在，也无法阻止后来将其删除。这时，linkpath 成为“悬空链接”，其他系统调用试图对其进行解引用操作都将出错（通常错误号为 ENOENT）
+##### readlink()
+readlink()系统调用的本职工作，将符号链接字符串的一份副本置于 buffer 指向的字符数组中
+```c
+#include<unistd.h>
+ssize_t readlink(const char *pathname,char *buffer,size_t bufsize);
+            return number of bytes placed in buffer on success , or -1 on error
+```
+bufsiz 是一个整型参数，用以告知 readlink()调用 buffer 中的可用字节数
+如果一切顺利，readlink()将返回实际放入 buffer 中的字节数。若链接长度超过 bufsiz，则置于 buffer 中的是经截断处理的字符串（并返回字符串大小，亦即 bufsiz）;
+> 由于 buffer 尾部并未放置终止空字符，故而也无法分辨 readlink()所返回的字符串到底是经过截断处理，还是恰巧将 buffer 填满。验证后者的方法之一是重新分配一块更大的 buffer，并再次调用 readlink()。另外，还可以将 pathname 的长度定义为常量 PATH_MAX (该常量定义了程序可拥有的最长路径名长度)
+#### 创建mkdir()和rmdir()
+##### mkdir()系统调用用于创建一个新目录;
+```c
+#include <sys/stat.h>
+int mkdir(const char *pathname,mode_t mode);
+            return 0 on success , or -1 on error
+```
+pathname参数指定了新目录的路径名. 该名可以是相对路径, 也可以是绝对路径,若具有该路径名的文件已经存在,则调用失败并设置error
+**对该位掩码值的指定方式既可以与 open()调用相同-----对表所列各常量进行或(|)操作，也可直接赋予八进制数值**。既定的 mode 值还将于进程掩码相与（&）（参见 15.4.6 节）。另外，set-user-ID 位始终处于关闭状态，因为该位对于目录而言毫无意义。
+##### rmdir()删除一个目录
+```c
+#include <unistd.h>
+int rmdir(const char *pathname);
+            return 0 on success , or -1 on error
+```
+************要使 rmdir()调用成功，则要删除的目录必须为空************。
+如果 pathname 的最后一部分为符号链接，那么 rmdir()调用将不对其进行解引用操作，并返回错误，同时将 errno 置为 ENOTDIR。
+#### 移除一个文件或目录: remove()
+```c
+#include<stdio.h>
+int remove(const char *pathname);
+            return 0 on success;-1 on error
+```
+remove()属于C语言库 而非系统调用
+- 如果pathname是文件 那么remove()将调用unlink()
+- 如果pathname是目录 那么remove()将调用rmdir()  
+与unlink()和rmdir()一样 remove()函数不会对符号链接解引用 其会直接删除符号连接本身,而非指向的文件  
+#### 读目录: opendir()和readdir()
+本节所述库函数可用于打开一个目录并逐一获取其包含文件的名称. 
+##### opendir()/fdopendir()
+用于打开一个目录,并返回指向该目录的句柄
+```c
+#include<dirent.h>
+
+DIR * opendir(const char * dirpath);
+            return directory stream handle , or NULL on error
+```
+opendir()函数打开dirpath指定的目录,并返回DIR类型结构的指针,该结构即所谓目录流
+```c
+#include<dirent.h>
+
+DIR * fdopendir(int fd);
+            return directory stream handle , or NULL on error
+```
+> 提供 fdopendir()函数，意在帮助应用程序免受各种竞态条件的困扰
+##### readdir()
+```c
+#include<dirent.h>
+
+struct dirent {
+    ino_t d_ino;  // file i-node number
+    char d_name[];// Null-terminated name of file// 256 byte
+}
+
+struct dirent * readdir(DIR * dirp);
+
+```
+每调用readdir()一次,就会从dirp中读取目录流中的下一目录条目 返回一枚指针,指向静态分配的dirent类型结构 
+每次调用readdir() dirent结构就会被覆盖掉
+遇到目录结尾或出错 readdir()将返回NULL (出错设置errno) 
+## 进程
+### 进程和程序
+进程是一个可执行程序的实例.
+程序是包含了一系列信息的文件，这些信息描述了如何在运行时创建一个进程， 所包括的内容如下
+- 二进制格式标识：每个程序文件都包含用于描述可执行文件格式的元信息。（a.out）
+- 机器语言指令：对程序算法进行编码。
+- 程序入口地址：标识程序开始执行时的启始指令位置。
+- 数据：程序文件包含的变量初始值和程序使用的字面量值。
+- 符号表及重定位表：描述程序中函数和变量的位置及名称。
+- 其他信息
+
+#### 进程号和父进程号
+每个进程都有唯一一个进程号，进程号是一个正数，用以唯一标识系统中的某个进程。对各种系统调用而言，进程号有时可以作为传入参数有时可以作为返回值。
+- getpid()
+```c
+#include<unistd.h>
+pid_t getpid();
+```
+getpid()返回调用进程的进程号，linux限制进程号需要小于等于32767,创建心进程时内核会按顺序将下一个可用的进程号分配给其使用。每当进程号达到32767的限制时，内核将重置进程号技术器 
+> 一旦进程号达到 32767，会将进程号计数器重置为 300，而不是 1。之所以如此，是因为低数值的进程号为系统进程和守护进程所长期占用，在此范围内搜索尚未使用的进程号只会是浪费时间
+
+每个进程都有一个创建自己的父进程。getppid()可以检索到自己的父进程号
+```c
+#include<unistd.h>
+pid_t getppid(void);
+
+```
+每个进程都有自己的父进程，进程号之间的属性反应了进程之间的树状关系。
+进程 1 init进程，即所有进程的始祖。使用pstree(1)命令可以查看到这一家族树
+若父进程终止，则子进程将变为孤儿，init将收留子进程对子进程的getppid()函数 将返回 1 
+#### 进程内存布局
+每个进程所分配的内存由很多部分组成，称之为“段”
+- 文本段 包含了进程运行的程序机器语言指令。文本段具有只读属性，以防进程通过错误指针意外修改自身指令。<!-- 因为多个进程可以同时运行同一程序 --> 所以又将文本段设为可以共享，这样一份代码的拷贝可以映射到这些进程的虚拟地址空间中
+- 初始化数据段 包含显式初始化的全局变量和静态变量. 当程序加载到内存时,从可执行程序中读取这些变量的值  
+- 未初始化数据段 包含了未进行显式初始化的全局变量和静态变量.程序启动之前,系统将本段内所有内存初始化为 0 ;
+- 栈 (stack) 是一个动态增长和收缩的段 ,由栈帧组成,系统会为当前调用的函数分配一个栈帧.栈帧中存储了函数的局部变量.实参.返回值
+- 堆 (heap) 是在可运行时为变量动态进行内存分配的一块区域
+#### 虚拟内存管理
+linux 同现代很多内核一样,采用了虚拟内存管理技术,该技术利用了大多数程序访问的访问局部性,以求cpu和RAM资源.大多程序都展现了两种类型的局部性
+- 空间局部性: 是指程序倾向与访问在最近访问过的内存地址附近的内存,
+- 时间局部性: 是指程序倾向于在不久的将来再次访问最近刚访问过的内存地址(由于循环)
+
+虚拟内存的规划之一是将每个应用程序使用的内存切割成小型的、固定大小的“页”单元，相依的，将RAM划分的一系列与虚拟页尺寸相同的页帧。任一时刻，每个程序仅有部分页需要存留在物理页帧中
+这些页构成了驻留集。程序未使用的页拷贝保存在交换区，这是磁盘空间中的保留区域，作为计算机RAM的补充----仅在需要时才会载入物理内存。若进程想要访问的页面目前并未驻留在物理内存中，将会发生页面错误。内核将挂起进程，同时从磁盘中将页面载入内存
+
+为支持这种方式，__内核需要为每个进程维护一张页表__ 该页表描述了每页在进程虚拟地址空间中的位置 页表中的每个条目,要么指出一个虚拟页面在RAM中的位置,要么表明其当前驻留在磁盘上.
+
+#### 栈和栈帧
+函数的调用和返回使栈的增长和收缩呈现性.栈驻留在内存的高端并向下增长,专用寄存器--栈指针.用于跟踪当前的栈顶.每次调用时,会在栈上新分配一帧,每当函数返回,则会从栈上将此帧移去
+每当函数调用 则会为其分配栈帧,(递归调用自己同理)
+#### 环境变量
+大多数shell通过`export`命令向环境中添加变量
+在哪进程创造时,会继承父进程的环境变量,二者通过环境变量来通信,在子进程创建后,二这可以更改各自的环境变量,而不会对对方在成影响
+
+##### 在程序中访问环境变量
+C 语言中,可以使用`char **environ`访问环境列表,(environ)与(argv)参数类似指向一个以NULL结尾的指针列表,每个指针又指向一个以空字符结尾的字符串
+此外 还可以同过声明main函数的参数列表来访问环境列表
+`int main(int argc, char ** argv,char **envp)`
+- getenv()函数能够从进程环境中检索单个值.
+```c
+#include<stdlib.h>
+char *getenv(const char *name);
+```
+返回相应的字符串指针
+如果指定 SHELL 为参数 name，那么将返回/bin/bash。如果不存在指定名称的环境变量，那么 getenv()函数将返回 NULL
+##### 修改环境
+```c
+#include<stdlib.h>
+int putenv(char* string);
+
+```
+参数 string 是一指针，指向 name=value 形式的字符串。调用 putenv()函数后，该字符串就成为环境的一部分，换言之，putenv 函数将设定 environ 变量中某一元素的指向与 string 参数的指向位置相同，而非 string 参数所指向字符串的复制副本。因此，如果随后修改 string 参数所指的内容，这将影响该进程的环境。出于这一原因，string 参数不应为自动变量（即在栈中分配的字符数组 ），因为定义此变量的函数一旦返回，就有可能会重写这块内存区域。
+- putenv()函数的 glibc 库实现还提供了一个非标准扩展。如果 string 参数内容不包含一个等号（=），那么将从环境列表中移除以 string 参数命名的环境变量
+
+```c
+#include<stdlib.h>
+int setenv(const char *name,const char *value,int overwrite);
+```
+setenv()函数为形如 name=value 的字符串分配一块内存缓冲区，并将 name 和 value 所指向的字符串复制到此缓冲区，以此来创建一个新的环境变量。注意，不需要（实际上，是绝对不要）在 name 的结尾处或者 value 的开始处提供一个等号字符，因为 setenv()函数会在向环境添加新变量时添加等号字符。
+
+#### 执行非局部跳转
+setjmp()_和_longjmp()
+在一个深度嵌套的函数调用中发生了错误，需要放弃当前任务，从多层函数调用中返回
+```c
+#include <setjmp.h>
+int setjmp(jmp_buf env);
+void longjmp(jmp_buf env, int val);
+```
+setjmp()调用为后续longjmp()调用的执行确立了跳转目标. 该目标正是程序发起setjmp()调用的位置, 
+- 可以区分 setjmp 调用是初始返回还是第二次“返回”。初始调用返回值为 0，后续“伪”返回的返回值为 longjmp()调用中 val 参数所指定的任意值。
+    - 若指定的val为0,则函数会将二次返回的值调换为1;
+setjmp()直接调用返回0 ;若从longjmp()处返回则返回longjmp()中指定的val.
+使用longjmp()的第二个参数的原因是可以多个longjmp()对应一个setjmp()
+```c
+#include <stdio.h>
+#include <setjmp.h>
+ 
+static jmp_buf buf;
+ 
+void second(void) {
+    printf("second\n");         // 打印
+    longjmp(buf,1);             // 跳回setjmp的调用处 - 使得setjmp返回值为1
+}
+ 
+void first(void) {
+    second();
+    printf("first\n");          // 不可能执行到此行
+}
+ 
+int main() {   
+    if ( ! setjmp(buf) ) {
+        first();                // 进入此行前，setjmp返回0
+    } else {                    // 当longjmp跳转回，setjmp返回1，因此进入此行
+        printf("main\n");       // 打印
+    }
+ 
+    return 0;
+}
+```
+```shell
+程序输出
+second
+main
+```
+-  longjmp必须在setjmp调用之后，而且longjmp必须在setjmp的作用域之内。具体来说，在一个函数中使用setjmp来初始化一个全局标号，然后只要该函数未曾返回，那么在其它任何地方都可以通过longjmp调用来跳转到 setjmp的下一条语句执行。实际上setjmp函数将发生调用处的局部环境保存在了一个jmp_buf的结构当中，只要主调函数中对应的内存未曾释放 （函数返回时局部内存就失效了），那么在调用longjmp的时候就可以根据已保存的jmp_buf参数恢复到setjmp的地方执行。
+
+- setjmp()函数的使用限制
+    - SUSv3和C99规定,对setjmp()的调用只能在如下语境中使用
+1. if、switch、while等整个控制表达式.
+2. 作为一元操作符! 的操作对象,其最终表达式构成了选择或迭代语句的整个控制表达式
+3. 作为比较操作的一部分,另一操作对象必须是一个常量表达式
+4. 作为独立的函数调用,没有嵌入更大的表达式
+    - `int a = setjmp(env);/*WRONG!*/`
+之所以规定这些限制，是因为作为常规函数的 setjmp()实现无法保证拥有足够信息来保存所有寄存器值和封闭表达式中用到的临时栈位置，以便于在 longjmp()调用后此类信息能得以正确恢复。因此，仅允许在足够简单且无需临时存储的表达式中调用 setjmp()。
+
+- **滥用longjmp()**
+如果将 env 缓冲区定义为全局变量对所用函数可见 , 那么就可以执行如下操作.
+1. 调用函数x(),使用setjmp()调用在全局变量env中建立一个跳转目标
+2. 从函数x()中返回.
+3. 调用函数y(),使用env变量调用longjmp()函数
+***这是一个严重错误，因为 longjmp()调用不能跳转到一个已经返回的函数中***。思考一下，在这种情况下，longjmp()函数会对栈打什么主意—尝试将栈解开，恢复到一个不存在的栈帧位置，这无疑将引起混乱。如果幸运的话，程序会一死（crash）了之。然而，取决于栈的状态，也可能会引起调用与返回间的死循环，而程序好像真地从一个当前并未执行的函数中返回了。（在多线程程序中有与之相类似的滥用，在线程某甲中调用 setjmp()函数，却在线程某乙中调用 longjmp()。）
+### 进程的创建
+#### fork() exit() wait() execve()的简介
+- fork()函数允许一进程创建一新进程.具体的子进程为父进程的拷贝,子进程拥有父进程的栈,数据段,堆,和执行文本段.
+- **exit(status)函数**,终止一个进程将进程的所有资源归还内核,交给其进行再次分配.参数status为一整型变量,表示进程的退出状态.父进程可以用wait()函数来获取该状态
+- **wait(&status)函数** 目的有二 如果子进程未调用exit()函数 那么wait函数会挂起父进程直到子进程终止;其二子进程的终止状态通过exit()函数返回
+- 系统调用execve(pathname,argv,envp)加载一个新程序路径名为pathname,参数列表为argv,envp)到当前进程的内存。这将丢弃现存的文本段，并为新程序重新创建栈、数据段、堆。这一操作通常称为执行一个新程序。
+
+#### fork()
+创建一个新的子进程 
+```c
+#include<unistd.h>
+pid_t fork(void);
+```
+理解 fork()的诀窍是，要意识到，完成对其调用后将存在两个进程，且每个进程都会从 fork()的返回处继续执行。这两个进程将执行相同的程序文本段，但却各自拥有不同的栈段、数据段以及堆段拷贝。子进程的栈、数据以及栈段开始时是对父进程内存相应各部分的完全复制。执行 fork()之后，每个进程均可修改各自的栈数据、以及堆段中的变量，而并不影响另一进程
+- 不同的是 fork()在不同的进程中返回不同  
+fork()在父进程中返回0  
+在子进程中返回子进程的进程ID(pid_t)  
+    - //fork()创建失败后返回-1
+**调用 fork()之后，系统将率先“垂青”于哪个进程（即调度其使用 CPU），是无法确定的，意识到这一点极为重要。在设计拙劣的程序中，这种不确定性可能会导致所谓“竞争条件（racecondition）”的错误**，24.2 节会对此做进一步说明 
+##### 父子进程之间的文件共享
+父子进程之间共享文件属性的妙用屡见不鲜.父子进程同时写入一文件,共享文件偏移量会确保二者不会覆盖彼此的输出内容. 但这并不能阻止进程之间的输入混乱, 若要规避这一现象 需要进行进程同步.比如父进程可以调用wait()来暂停运行 
+##### vfork()//不建议?
+```c
+pid_t vfork(void );
+```
+fork()和vfork()区别
+- vfork会挂起父进程,直到vfork出的子进程进行_exit()或exec()操作
+- 与fork()不同 vfork()的子进程与父进程共享内存,
+- vfork()产生的子进程不应调用 exit()退出，因为这会导致对父进程 stdio 缓冲区的刷新和关闭
+除非速度绝对重要的场合，新程序应当舍 vfork()而取 fork()。原因在于，当使用写时复制语义实现 fork()（大部分现代 UNIX 实现皆是如此）时，在速度几近于 vfork()的同时，又避免了 vfork()的上述怪异行止
+
+### 进程的终止
+#### exit()和_exit()
+
+
+
+
+
+
