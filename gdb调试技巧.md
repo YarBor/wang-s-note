@@ -338,8 +338,9 @@ Breakpoint 1, print_ls_of_one_RRR (path=0x7fffffff89a0 "//sys/kernel/slab/:00005
 ```
 ### 单步调试
 - `next/n`命令进行单步操作 不进入函数
-
+一次一步
 - `step/s` 命令进行单步操作 进入函数
+一次一步
 
 
 ### 查看变量
