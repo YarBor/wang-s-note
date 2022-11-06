@@ -1048,9 +1048,95 @@ fork()和vfork()区别
 
 ### 进程的终止
 #### exit()和_exit()
+exit()函数会进行系统调用_exit() 并且exit()会关闭当前进程的所有文件描述符  
 
+### fork().stdio缓冲区以及_exit()之间的交互
+```cpp
+#include<stdio.h>
+int main(int argc,char ** argv)
+{
+    printf("hello world");
+    write(STDOUT_FILENO,"Ciao\n",5);
+    if(fork()==-1)
+        errExit("fork");
+    exit(EXIT_SUCCESS) ;
+}
+```
+上述代码在输出定向到终端时,会看到预计结果
+```shell
+$ ./test
+hello world
+Ciao
+```
+但重定向输出到文件时,结果如下
+```shell
+$ ./test > a
+$ cat a
+Ciao
+hello world
+hello world
+```
+> 要理解为什么 printf()的输出消息出现了两次，首先要记住，是在进程的用户空间内存中（参考 13.2 节）维护 stdio 缓冲区的。因此，通过 fork()创建子进程时会复制这些缓冲区。**当标准输出定向到终端时，因为缺省为行缓冲，所以会立即显示函数 printf()输出的包含换行符的字符串**。不过，**当标准输出重定向到文件时，由于缺省为块缓冲，所以在本例中，当调用 fork()时，printf()输出的字符串仍在父进程的 stdio 缓冲区中，并随子进程的创建而产生一份副本。父、子进程调用 exit()时会刷新各自的 stdio 缓冲区，从而导致重复的输出结果**  
+- 采用以下方式来避免问题
+    - 针对stdio缓冲区解决 调用fork()前使用函数fflush()来刷新缓冲区 或者使用setvbuf()与setbuf()来关闭stdio流的缓冲功能
+    - 子进程调用_exit()系统调用 从而不再刷新stdio缓冲区  
+        - 在创建子进程的应用中,典型情况下应仅有一个进程通过exit()函数终止,其他的子进程应通过_exit()终止,从而确保只有一个进程调用处理程序并刷新stdio缓冲区.
 
+write()的输出并未出现两次 是因为write()调用会将数据直接传给内核缓冲区 在进行fork()时 不会复制这部分缓冲
+write()的输出结果先于printf()而出现，是因为 write()会将数据立即传给内核高速缓存，而 printf()的输出则需要等到调用 exit ()刷新 stdio 缓冲区时
 
+### 监控子进程
+#### 等待子进程
+##### 系统调用wait()
+系统调用wait()等待调用进程的任一子进程终止,同时在参数status所指的缓冲区中返回该子进程的终止状态.
+```c
+#include<sys/wait.h>
+pid_t wait(int *status);
+```
+- 执行如下操作
+    - 调用进程无子进程终止,调用将一直阻塞,知道某个子进程exit,若调用时已有子进程终止,wait()即立即返回,
+    - 如果status非空,那么关于子进程的信息会通过status返回
+    - 内核会为父进程下所有子进程的运行总量追加进程的cpu时间以及资源使用数据
+    - 将终止进程的ID作为wait()的结果返回
 
+```c
+while((childpid=wait(NULL))!=-1)
+    continue;
+if(errno!=ECHILD)
+    errexit(errno);
+```
+如上代码将等待所有子进程退出后执行后续代码
+##### 系统调用waitpid()
+wait()调用有着诸多限制,设计waitpid()则避免了这些限制
+1. 父进程已经创建了诸多子进程 ,wait将无法等待某个特定子进程的完成 ,只能顺序等待
+2. 没有子进程退出,wait()总是保持阻塞. 有时会希望执行非阻塞的等待.
+3. 使用wait()只能发现已经终止的子进程.对于子进程因某个信号 
 
+```c
+#include <sys/wait.h>
+pid_t waitpid(pid_t pid,int *status,int options);
+```
+- pid 大于 0, 表示等待进程ID为pid的子进程
+- pid 小于-1, 则会等待进程组标识符与pid绝对值相等的所有子进程
+- pid 等于-1, 则等待任意子进程.
+  - wait(&status)调用与waitpid(-1,&status,0)等价
 
+其中options是一个位掩码,可以是0 也可以包含多个如下标识(*或*操作)
+1、WNOHANG：如果没有任何已经结束的子进程则马上返回, 不予以等待；
+2、WUNTRACED：如果子进程进入暂停执行情况则马上返回, 但结束状态不予以理会. 子进程的结束状态返回后存于status, 底下有几个宏可判别结束情况；
+3、WIFEXITED(status)：如果子进程正常结束则为非0 值；
+4、WEXITSTATUS(status)：取得子进程exit()返回的结束代码, 一般会先用WIFEXITED 来判断是否正常结束才能使用此宏；
+5、WIFSIGNALED(status)：如果子进程是因为信号而结束则此宏值为真；
+6、WTERMSIG(status)：取得子进程因信号而中止的信号代码, 一般会先用WIFSIGNALED 来判断后才使用此宏；
+7、WIFSTOPPED(status)：如果子进程处于暂停执行情况则此宏值为真. 一般只有使用WUNTRACED时才会有此情况；
+8、WSTOPSIG(status)：取得引发子进程暂停的信号代码, 一般会先用；
+9、WIFSTOPPED 来判断后才使用此宏。
+
+##### wait() 和waitpid() 的区别
+- wait等待第一个终止的子进程，而waitpid可以通过pid参数指定等待哪一个子进程。当pid=-1、option=0时，waitpid函数等同于wait，可以把wait看作waitpid实现的特例。  
+- waitpid函数提供了wait函数没有提供的三个功能：
+    1. waitpid等待一个特定的进程，而wait则返回任一终止子进程的状态 。
+    2. waitpid提供了一个 wait的非阻塞版本，有时希望取得一个子进程的状态， 但不想进程阻塞。
+    3. waitpid支持作业控制。
+
+##### 等待状态值
