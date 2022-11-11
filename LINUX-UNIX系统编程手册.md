@@ -1122,17 +1122,18 @@ pid_t waitpid(pid_t pid,int *status,int options);
   - wait(&status)调用与waitpid(-1,&status,0)等价
 
 其中options是一个位掩码,可以是0 也可以包含多个如下标识(*或*操作)
-1、WNOHANG：如果没有任何已经结束的子进程则马上返回, 不予以等待；
-2、WUNTRACED：如果子进程进入暂停执行情况则马上返回, 但结束状态不予以理会. 子进程的结束状态返回后存于status, 底下有几个宏可判别结束情况；
-3、WIFEXITED(status)：如果子进程正常结束则为非0 值；
-4、WEXITSTATUS(status)：取得子进程exit()返回的结束代码, 一般会先用WIFEXITED 来判断是否正常结束才能使用此宏；
-5、WIFSIGNALED(status)：如果子进程是因为信号而结束则此宏值为真；
-6、WTERMSIG(status)：取得子进程因信号而中止的信号代码, 一般会先用WIFSIGNALED 来判断后才使用此宏；
-7、WIFSTOPPED(status)：如果子进程处于暂停执行情况则此宏值为真. 一般只有使用WUNTRACED时才会有此情况；
-8、WSTOPSIG(status)：取得引发子进程暂停的信号代码, 一般会先用；
-9、WIFSTOPPED 来判断后才使用此宏。
 
-##### wait() 和waitpid() 的区别
+1. WNOHANG：如果没有任何已经结束的子进程则马上返回, 不予以等待.    
+2. WUNTRACED：**如果子进程进入暂停执行情况则马上返回**, **但结束状态不予以理会**. 子进程的结束状态返回后存于status, 底下有几个宏可判别结束情况.    
+3. WIFEXITED(status)：**如果子进程正常结束则为非0** 值.    
+4. WEXITSTATUS(status)：取得子进程exit()返回的结束代码, 一般会先用WIFEXITED 来判断是否正常结束才能使用此宏.    
+5. WIFSIGNALED(status)：**如果子进程是因为信号而结束则此宏值为真**.    
+6. WTERMSIG(status)：取得子进程因信号而中止的信号代码, 一般会先用WIFSIGNALED 来判断后才使用此宏.   
+7. WIFSTOPPED(status)：**如果子进程处于暂停执行情况则此宏值为真**. **一般只有使用WUNTRACED时才会有此情况**.    
+8. WSTOPSIG(status)：取得引发子进程暂停的信号代码, 一般会先用WIFSTOPPED 来判断后才使用此宏.  
+
+#### wait() 和waitpid() 的区别
+
 - wait等待第一个终止的子进程，而waitpid可以通过pid参数指定等待哪一个子进程。当pid=-1、option=0时，waitpid函数等同于wait，可以把wait看作waitpid实现的特例。  
 - waitpid函数提供了wait函数没有提供的三个功能：
     1. waitpid等待一个特定的进程，而wait则返回任一终止子进程的状态 。
@@ -1140,3 +1141,280 @@ pid_t waitpid(pid_t pid,int *status,int options);
     3. waitpid支持作业控制。
 
 ##### 等待状态值
+wait()和waitpid()返回的status的值,可以用来区分以下子进程.
+- 子进程exit退出终止
+- 子进程受到未处理信号而终止
+- 子进程因受到信号而停止,并以WUNTRACED标识调用waitpid().
+- 子进程因收到信号SIGCONT而恢复,并以WCONTINUED标志调用waitpid().  
+上述所用情况都可以用 **"等待状态"**来涵盖, 而前两种则可以用 **"终止状态"**指代,
+
+
+头文件<sys/wait.h>定义了下述宏 对各自wait()或waitpid()返回的status值进行处理时,以下列表中各宏会返回真值(只有一个)
+- WIFEXITED(status)
+
+  - 子进程正常结束则返回真(1).此时,宏 **WEXITSTATUS** 返回子进程的退出状态;
+
+- WIFSIGNALED(status)
+
+  - 若通过信号杀死子进程则返回真.此时,宏 WTERMSIG(status)返回导致子进程终止的信号编号,若子进程产生内核转储文件，则宏 WCOREDUMP(status)返回真值（true）
+
+- WIFSTOPPED(status)
+
+  - 若子进程因信号而停止,则此宏返回true.此时宏 WSTOPSIG(status)返回导致子的信号编号
+
+- WIFCONTINUED(status)
+
+  - 子进程收到SIGCONT而回复执行,则此宏返回真值true.
+
+
+ **尽管上述宏的参数也以 status 命名，不过此处所指只是简单的整型变量，而非像wait()和 waitpid()所要求的那样是指向整型的指针**
+
+
+```c
+ #define _GUN_SOURCE
+ #include <string.h>
+ #include <sys/wait.h>
+ void printWaitStatus(const char *msg, int status)
+ {
+     if (msg != NULL)
+         printf("%s", msg);
+     if (WIFEXITED(status))
+     {
+         printf("child exited ,status=%d\n", WEXITSTATUS(status));
+     }
+     else if (WIFSIGNALED(status))
+     {
+         printf("child killed by signal %d (%s)",WTERMSIG(status),strsignal(WTERMSIG(status));
+ 
+ #ifdef WCOREDUMP
+         if(WCOREDUMP(status))
+             printf("(core dumped)");
+ #endif
+         printf("\n");
+     }
+     else if (WIFSIGNALED(status))
+     {
+         printf("child stopped by signal %d (%s)\n," WSTOPSIG(status), strsignal(WSTOPSIG(status)));
+ #ifdef WIFCONTINUED
+     }
+     else if (WIFCONTINUED(status))
+     {
+         printf("child continue\n");
+  #endif
+     }
+     else
+     {
+         printf("what happened to this child?(status=%x)\n", (unsigned int)status);
+     }
+}
+
+ ```
+
+#### 从信号处理程序中终止程序
+默认情况下某些信号会终止进程,有时希望在进程终止前执行一些清理步骤. 为此可以处理程序来捕捉这些信号,随即执行清理步骤 但若这么做 父进程 依然可以通过wait()和waitpid()获得到子进程的终止状态 **如子程序获取信号后** **调用_exit** **则在父进程中监控的程序状态则为正常终止的**
+
+如果需要通知父进程自己因某个信号而终止，那么子进程的信号处理程序应首先将自己废除，然后再次发出相同信号，该信号这次将终止这一子进程。信号处理程序需包含如下代码
+```c
+void handler(int sig)
+{
+    /* perform cleanup */
+    signal(sig, SIG_DFL);
+    raise(sig);
+}
+```
+
+
+
+
+
+
+## 信号
+信号分两大类 
+- 一组用于向内核通知事件 构成所谓的标准信号  Linux中标准信号编号范围是0-31 
+- 另一组由实时信号构成
+
+产生信号后 其会于稍后进行传递 
+若目标进程正在运行 则马上传递并响应 
+若目标进程阻塞 则在目标进程运行时进行传递
+
+得到信号后
+- 忽略信号：也就是说，内核将信号丢弃，信号对进程没有产生任何影响（进程永远都不知道曾经出现过该信号）。
+
+- 终止（杀死）进程：这有时是指进程异常终止，而不是进程因调用 exit()而发生的正常终止。
+
+- 产生核心转储文件，同时进程终止：核心转储文件包含对进程虚拟内存的镜像，可将其加载到调试器中以检查进程终止时的状态。
+
+- 停止进程：暂停进程的执行。
+
+- 于之前暂停后再度恢复进程的执行。
+
+除了根据特定信号而采取默认行为之外，程序也能改变信号到达时的响应行为。也将此称之为对信号的处置（disposition）设置。程序可以将对信号的处置设置为如下之一。
+-  采取默认行为。这适用于撤销之前对信号处置的修改、恢复其默认处置的场景。
+
+- 忽略信号。这适用于默认行为为终止进程的信号。
+
+- 执行信号处理器程序。
+  - 信号处理器程序是由程序员编写的函数，用于为响应传递来的信号而执行适当任务
+
+> 信号处理器程序是由程序员编写的函数，用于为响应传递来的信号而执行适当任务。例如，shell 为 SIGINT 信号（由中断字符串 Control-C 产生）提供了一个处理器程序，令其停止当前正在执行的工作，并将控制返回到（shell 的）主输入循环，并再次向用户呈现 shell 提示符
+
+无法将信号处置设置为终止进程或者核心转储//最为相似的行为是该信号安装一个处理器程序 于其中调用exit()或者abort()
+abort()函数将为进程产生一个SIGABRT信号 该信号将引发进程转储核心文件并终止
+
+### 信号类型和默认行为
+![](https://img-blog.csdnimg.cn/2021010821250941.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3poaXpoZW5nZ3Vhbg==,size_16,color_FFFFFF,t_70)
+![](https://img-blog.csdnimg.cn/20210108212619741.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3poaXpoZW5nZ3Vhbg==,size_16,color_FFFFFF,t_70)
+
+- 各种信号产生条件和默认处理方式描述如下：
+    - **SIGABRT** 默认处理方式：终止+core；当程序调用abort函数时，会产生该信号。程序异常终止。
+    - **SIGALRM** 默认处理方式：终止；当由alarm或setitimer函数设置的定时器超时时，会产生该信号。
+    - **SIGBUS** 默认处理方式：终止+core；经常因为内存错误产生该信号。
+    - **SIGCHLD** 默认处理方式：忽略；当进程terminate或stopped的时候，该信号会发送给父进程。如果父进程需要知道子进程什么时候终止，父进程必须捕获该信号。通常在该信号的捕获函数中调用wait或waitpid获取子进程的pid和终止状态。
+    - **SIGCONT** 默认处理方式：忽略/继续；作业控制命令进程继续执行时，该信号发送给进程。如果进程之前已被停止，则该信号的默认处理方式是继续进程的执行；否则，忽略该信号。
+    - **SIGFPE** 默认处理方式：终止+core；当发生算术错误（如：除零，溢出等）时，产生该信号。
+    - **SIGHUP** 默认处理方式：终止；当终端界面检测到连接断开时，内核向与控制终端的session leader进程发送该信号（当且仅当终端的CLOCAL标识位没有被设置时，才会发送该信号）。接收信号的session leader可能是后台进程，这与普通终端产生的信号不同，普通终端信号接收者是前台进程组。另外，当控制终端的session leader终止时，SIGHUP信号会发送到前台进程组。因为守护进程没有控制终端，通常不应该接收该信号的，所以这个信号常常被用作守护进程重新读取配置文件的信号。
+    - **SIGILL** 默认处理方式：终止；当处理器执行了非法指令时，产生该信号。
+    - **SIGINT** 默认处理方式：终止；当向终端输入终端键（Control+C或DELETE）时，终端产生SIGINT信号。该信号被发送到前台进程组。通常用来终止已运行的进程。
+    - **SIGIO** 默认处理方式：终止/忽略；该信号用来提供异步IO模式。当有IO可用时，产生该信号通知进程。
+    - **SIGKILL** 默认处理方式：终止；该信号给超级用户提供了终止任何进程的能力，通常通过kill函数或命令。该信号不能够被忽略或捕获。
+    - **SIGPIPE** 默认处理方式：终止；当向已经关闭读者的管道写数据时，会产生该信号。同样向未连接的SOCK_STREAM类型的socket写数据时，也会产生该信号。
+    - **SIGPOLL** 默认处理方式：终止；当指定的事件发生在可选择的设备上时，产生该信号。
+    - **SIGPROF** 默认处理方式：终止；由setitimer设置的间隔定时器超时会产生该信号。
+    - **SIGPWR** 默认处理方式：终止；当系统有UPS（Uninterruptible Power Supply，即电池）时，断电后使用电池，当电池电量低时，会产生该信号通知进程在1530秒内关闭。
+    - **SIGQUIT** 默认处理方式：终止+core；当输入退出键（Control+\）时，终端将会产生SIGQUIT信号，该信号被传送到前台进程组。
+    - **SIGSEGV** 默认处理方式：终止+core；非法内存引用时，产生该信号。
+    - **SIGSTOP** 默认处理方式：停止进程；作业控制信号，用来停止进程。该信号不能被忽略或捕获。
+    - **SIGSYS** 默认处理方式：终止+core；非法系统调用时，产生该信号。
+    - **SIGTERM** 默认处理方式：终止；kill函数默认发送的信号，用来终止进程。
+    - **SIGTRAP** 默认处理方式：终止+core；系统定义的硬件错误。通常，在遇到调试断点时，将控制权传递给debugger。
+    - **SIGTSTP** 默认处理方式：停止进程；当输入挂起键（Control+Z）时，终端产生该（交互式停止）信号停止进程。该信号被发送给前台进程组。
+    - **SIGTTIN** 默认处理方式：停止进程；当后台进程组中的进程要求从控制终端读取数据时，会产生该信号。有两个例外情况：1、要求读数据的后台进程忽略或阻塞了该信号，2、进程所属进程组是“孤儿”。在这两种情况下，不会产生该信号，否则，read会错误返回，并将errno设置为EIO。
+    - **SIGTTOU** 默认处理方式：停止进程；当后台进程组中的进程要求写数据到控制终端时，会产生该信号。后台进程可以被允许写数据到控制终端。当不允许后台进程写数据到控制终端时，write会错误返回，并将errno设置为EIO。到有两个例外情况：1、要求写数据的后台进程忽略或阻塞了该信号，2、进程所属进程组是“孤儿”。在这两种情况下，不会产生该信号。
+    - **SIGURG** 默认处理方式：忽略；当网络连接（Socket）接收到带外数据（out-of-band data）时，会产生该信号。
+    - **SIGUSR1** 默认处理方式：终止；用户自定义的信号。
+    - **SIGUSR2** 默认处理方式：终止；用户自定义的信号。
+    - **SIGVTALRM** 默认处理方式：终止；由setitimer设置的虚拟定时器超时时，产生该信号。
+    - **SIGXCPU** 默认处理方式：终止+core/忽略；进程超过了CPU的软限制时，产生该信号。
+    - **SIGXFSZ** 默认处理方式：终止+core/忽略；进程超过了文件大小的软限制时，产生该信号。  
+
+
+### 改变信号处置 signal()/sigaction()
+#### signal()
+```c 
+#include <signal.h>
+void (*signal(int sig,void(*handler)(int)))(int );
+```
+`signal(int sig,void(*handler)(int))`signal函数有2个参数，第一个是int，第二个是无返回值，带一个int参数的函数指针
+`void   (*signal(xxx))   (int)`  **signal函数返回的是一个函数指针**，无返回值，有一个int参数
+
+```c 
+test.c
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <signal.h>
+
+void sighandler(int);
+
+int main()
+{
+   signal(SIGINT , sighandler);//第一个位置不是掩码
+   signal(SIGTSTP , sighandler);
+
+   while(1) 
+   {
+      printf("开始休眠一秒钟...\n");
+      sleep(1);
+   }
+
+   return(0);
+}
+
+void sighandler(int signum)
+{
+   printf("捕获信号 %d,跳出...\n", signum);
+   exit(1);
+}
+```
+#### sigaction()
+sigaction()调用比signal调用更复杂 也更灵活
+```c
+#include<signal.h>
+int sigaction(int sig,const struct sigaction *act , struct struct *oldact);
+
+```
+- sig 要获得或改变的信号编号.该参数可以是除去SIGKILL和SIGSTOP之外的任何信号
+- act 要设置的对信号的新处理方式
+- oldcat 对原来信号的处理方式
+返回值 0——成功 -1——有错误生成
+
+如下是`sigaction strcut`的定义 
+在调用sigaction 时要定义其相应的结构体
+```c
+struct sigaction
+{
+ void     (*sa_handler)(int);//信号处理函数
+ void     (*sa_sigaction)(int, siginfo_t *, void *);
+ sigset_t  sa_mask;// 将sa_mask信号组添加至进程掩码 直至信号处理函数返回
+ int       sa_flags;
+ void     (*sa_restorer)(void);
+};
+```
+`sa_handler` 对应 `signal()的 handle参数`
+- 其所指定的值为信号处理器函数的地址，亦或是常量 SIG_IGN、SIG_DFL 之一。仅当 sa_handler 是信号处理程序的地址时，亦即 sa_handler的取值在 SIG_IGN 和 SIG_DFL 之外，才会对 sa_mask 和 sa_flags 字段（稍后讨论）加以处理。
+- sa_mask 定义了一组信号,当调用信号处理器时，将该组信号中未处于进程掩码之列的信号 添加至进程掩码 直至信号处理函数返回
+  - 即 使用sa_mask定义一组信号 不允许这组信号在执行信号处理函数时中断函数
+
+
+ sa_flags 字段是一个位掩码，指定用于控制信号处理过程的各种选项。该字段包含的位如下（可以相或（|））。
+
+- **SA_NOCLDSTOP**
+  - 若 sig 为 SIGCHLD 信号，则当因接受一信号而停止或恢复某一子进程时，将不会产生此信号。参见 26.3.2 节。
+
+- **SA_NOCLDWAIT**
+  - （始于 Linux 2.6）若 sig 为 SIGCHLD 信号，则当子进程终止时不会将其转化为僵尸。更多细节参见 26.3.3 节。
+
+- **SA_NODEFER**
+  - 捕获该信号时，不会在执行处理器程序时将该信号自动添加到进程掩码中。SA_NOMASK历史上曾是 SA_NODEFER 的代名词。之所以建议使用后者，是因为 SUSv3 将其纳入规范。
+
+- **SA_ONSTACK**
+  - 针对此信号调用处理器函数时，使用了由 sigaltstack()安装的备选栈。参见 21.3 节。
+
+- **SA_RESETHAND**
+  - 当捕获该信号时，会在调用处理器函数之前将信号处置重置为默认值（即 SIG_DFL）（默认情况下，信号处理器函数保持建立状态，直至进一步调用 sigaction()将其显式解除。）
+
+- **SA_ONESHOT** 历史上曾是 SA_RESETHAND 的代名词，之所以建议使用后者，是因为 SUSv3将其纳入规范。
+
+- **SA_RESTART**
+  - 自动重启由信号处理器程序中断的系统调用。参见 21.5 节。
+
+- **SA_SIGINFO**
+  - 调用信号处理器程序时携带了额外参数
+
+
+
+### 信号处理器
+信号处理程序 当指定信号传递给进程时会调用的一个函数. 
+调用信号处理程序,可能会随时打断主程序流程:内核代表进程来调用处理器程序
+简单信号处理器
+```cpp
+#include<signal.h>
+static void sigHandler(int sig)
+{
+    printf("wow");
+}
+int main(int argc,char ** argv)
+{
+    int j;
+    if(signal(SIGINT, sigHandler)==SIG_ERR)
+    exit ("SIGNAL");
+
+    while(1)
+    {
+        printf("%d\n",j);
+        sleep(3);
+    }
+}
+
+```
+
