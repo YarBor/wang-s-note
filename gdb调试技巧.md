@@ -438,7 +438,7 @@ info function： 查询函数
 扩展info locals： 显示当前堆栈页的所有变量
 
 5、查看运行信息
-where/bt ：当前运行的堆栈列表；
+where/bt ：当前运行的堆栈列表； 
 bt backtrace 显示当前调用堆栈
 up/down 改变堆栈显示的深度
 set args 参数:指定运行时的参数
