@@ -244,10 +244,10 @@ int main(int argc ,char** argv)
 
 fcntl()有5种功能 :
 *   1. 复制一个现有的描述符(cmd=F_DUPFD)  
-*    2. 获得/设置文件描述符标记(cmd=F_GETFD或F_SETFD)
- *   3. 获得/设置文件状态标记(cmd=F_GETFL或F_SETFL)
-  *  4. 获得/异步I/O所有权(cmd=F_GETOWN或F_SETOWN)
-   * 5. 获得/设置记录锁(cmd=F_GETLK,F_SETLK或F_SETLKW)
+*   2. 获得/设置文件描述符标记(cmd=F_GETFD或F_SETFD)
+*   3. 获得/设置文件状态标记(cmd=F_GETFL或F_SETFL)
+*   4. 获得/异步I/O所有权(cmd=F_GETOWN或F_SETOWN)
+*   5. 获得/设置记录锁(cmd=F_GETLK,F_SETLK或F_SETLKW)
 
 描述: **fcntl()针对文件描述符提供控制**,参数fd是被参数cmd操作的描述符;  
 针对cmd的值,fcntl能接受第三个参数(arg)  
@@ -1322,10 +1322,10 @@ wait()调用有着诸多限制,设计waitpid()则避免了这些限制
 2. 没有子进程退出,wait()总是保持阻塞. 有时会希望执行非阻塞的等待.
 3. 使用wait()只能发现已经终止的子进程.对于子进程因某个信号 
 
-```c
+ ```c
 #include <sys/wait.h>
 pid_t waitpid(pid_t pid,int *status,int options);
-```
+ ```
 - pid 大于 0, 表示等待进程ID为pid的子进程
 - pid 小于-1, 则会等待进程组标识符与pid绝对值相等的所有子进程
 - pid 等于-1, 则等待任意子进程.
@@ -1335,12 +1335,15 @@ pid_t waitpid(pid_t pid,int *status,int options);
 
 1. WNOHANG：如果没有任何已经结束的子进程则马上返回, 不予以等待.    
 2. WUNTRACED：**如果子进程进入暂停执行情况则马上返回**, **但结束状态不予以理会**. 子进程的结束状态返回后存于status, 底下有几个宏可判别结束情况.    
-3. WIFEXITED(status)：**如果子进程正常结束则为非0** 值.    
-4. WEXITSTATUS(status)：取得子进程exit()返回的结束代码, 一般会先用WIFEXITED 来判断是否正常结束才能使用此宏.    
-5. WIFSIGNALED(status)：**如果子进程是因为信号而结束则此宏值为真**.    
-6. WTERMSIG(status)：取得子进程因信号而中止的信号代码, 一般会先用WIFSIGNALED 来判断后才使用此宏.   
-7. WIFSTOPPED(status)：**如果子进程处于暂停执行情况则此宏值为真**. **一般只有使用WUNTRACED时才会有此情况**.    
-8. WSTOPSIG(status)：取得引发子进程暂停的信号代码, 一般会先用WIFSTOPPED 来判断后才使用此宏.  
+3.  WNOHANG: 忽略子进程的返回状态 不阻塞;
+
+- 一些宏
+1.  WIFEXITED (status)：**如果子进程正常结束则为非0** 值.    
+2. WEXITSTATUS(status)：取得子进程exit()返回的结束代码, 一般会先用WIFEXITED 来判断是否正常结束才能使用此宏.    
+3. WIFSIGNALED(status)：**如果子进程是因为信号而结束则此宏值为真**.    
+4.  WTERMSIG  (status)：取得子进程因信号而中止的信号代码, 一般会先用WIFSIGNALED 来判断后才使用此宏.   
+5. WIFSTOPPED (status)：**如果子进程处于暂停执行情况则此宏值为真**. **一般只有使用WUNTRACED时才会有此情况**.    
+6.  WSTOPSIG  (status)：取得引发子进程暂停的信号代码, 一般会先用WIFSTOPPED 来判断后才使用此宏.  
 
 #### wait() 和waitpid() 的区别
 
@@ -1453,3 +1456,80 @@ void handler(int sig)
 
 通常SIGCHLD处理程序都简单的由以下代码组成 **/仅捕获已终止子进程而不关心其退出状态**
 `while(waitpid(-1,NULL,WNOHANG)>0);`
+
+### 程序的执行
+exec()族关系
+|前4位|第五位  |第六位|
+|-|--|--|
+| **都为exec** | l:参数以列举的方式传递 |e:可以传递环境变量  |
+| **都为exec**|v:参数以结构体指针的方式传递|p:可执行文件查找方式为文件名|
+```cpp
+
+int execl(const char *pathname, const char *arg, ...);
+
+int execv(const char *pathname, char *const argv[]);
+
+int execle(const char *pathname, const char *arg, ..., const char *envp[]);
+
+int execlp(const char *filename, const char *arg, ...);
+
+int execve(const char *pathname, char *const arg, ..., const char *envp[]);
+
+int execvp(const char *filename, char *const argv[]);
+// 各个函数的定义
+// ... 是指以 "..." 列出的传入的arg参数
+```
+```cpp
+// 举例
+int main(int argc, char **argv)
+{
+    char *const ps_argv[] = {"ps", "-o", "pid,ppid,pgrp,session,tpgid,comm", NULL};
+
+    char *const ps_envp[] = {"PATH=/bin:/usr/bin", "TERM=console", NULL};
+
+    execl("/bin/ps", "ps", "-o", "pid,ppid,pgrp,session,tpgid,comm", NULL);
+
+    execv("/bin/ps", ps_argv);
+
+    execle("/bin/ps", "ps", "-o", "pid,ppid,pgrp,session,tpgid,comm", NULL, ps_envp);
+
+    execve("/bin/ps", ps_argv, ps_envp);
+
+    execlp("ps", "ps", "-o", "pid,ppid,pgrp,session,tpgid,comm", NULL);
+
+    execvp("ps", ps_argv);
+    
+    execl("/home/wang/Desktop/object/test/", "-a", "-b", "--help",NULL);
+}
+```
+
+- exec函数族使用注意点
+
+在使用exec函数族时，一定要加上错误判断语句。因为exec很容易执行失败，其中最常见的原因有：
+
+1. 找不到文件或路径，此时errno被设置为ENOENT。
+
+2. 数组argv和envp忘记用NULL结束，此时errno被设置为EFAULT。
+
+3. 没有对应可执行文件的运行权限，此时errno被设置为EACCES。
+
+- exec后新进程保持原进程以下特征
+
+        - 环境变量（使用了execle、execve函数则不继承环境变量）；
+        - 进程ID和父进程ID；
+        - 实际用户ID和实际组ID；
+        - 附加组ID；
+        - 进程组ID；
+        - 会话ID；
+        - 控制终端；
+        - 当前工作目录；
+        - 根目录；
+        - 文件权限屏蔽字；
+        - 文件锁；
+        - 进程信号屏蔽；
+        - 未决信号；
+        - 资源限制；
+        - tms_utime、tms_stime、tms_cutime以及tms_ustime值。
+
+对打开文件的处理与每个描述符的exec关闭标志值有关，进程中每个文件描述符有一个exec关闭标志（FD_CLOEXEC），若此标志设置，则在执行exec时关闭该描述符，否则该描述符仍打开。除非特地用fcntl设置了该标志，否则系统的默认操作是在exec后仍保持这种描述符打开，利用这一点可以实现I/O重定向。
+
