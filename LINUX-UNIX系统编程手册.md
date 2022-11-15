@@ -1039,6 +1039,19 @@ struct sigaction
 - **SA_SIGINFO**
   - 调用信号处理器程序时携带了额外参数
 
+```c
+sigaction(SIGINT, &saIgnore, &saOrigInt);
+sigaction(SIGQUIT, &saIgnore, &saOrigInt);
+//将原来对信号的操作保存到 saOrinInt 结构体中
+//将新的信号处理程序改为 saIgnore 
+```
+- 对于 结构体sigaction 的
+    - sa_handler参数 
+        - == SIG_IGN : 忽略信号
+        - == SIG_DEF : 恢复信号的默认行为
+    - sigset_t sa_mask： 
+        - 指定一个。信号集，在调用sa_handler所指向的信号处理函数之前，该信号集将被加入到进程的信号屏蔽字中。信号屏蔽字是指当前被阻塞的一组信号，它们不能被当前进程接收到
+    
 
 
 ### 信号处理器
@@ -1082,6 +1095,41 @@ int kill(pid_t pid,int sign);
 int raise(int sign);
 ```
 向自己发送信号 
+### 信号集函数
+
+- `int sigemptyset(sigset_t *set);`
+
+  - 该函数的作用是将信号集初始化为空。
+
+- `int sigfillset(sigset_t *set);`
+
+  - 该函数的作用是把信号集初始化包含所有已定义的信号。
+
+- `int sigaddset(sigset_t *set,int signo);`
+
+  - 该函数的作用是把信号signo添加到信号集set中，成功时返回0，失败时返回-1。
+
+- `int sigdelset(sigset_t *set,int signo);`
+
+  - 该函数的作用是把信号signo从信号集set中删除，成功时返回0，失败时返回-1.
+
+- `int sigismember(sigset_t *set,int signo);`
+
+  - 该函数的作用是判断给定的信号signo是否是信号集中的一个成员，如果是返回1，如果不是，返回0，如果给定的信号无效，返回-1；
+
+- `int sigprocmask(int how,const sigset_t *set,sigset_t *oset);`
+
+  - 该函数可以根据参数指定的方法修改进程的信号屏蔽字。新的信号屏蔽字由参数set（非空）指定，而原先的信号屏蔽字将保存在oset（非空）中。如果set为空，则how没有意义，但此时调用该函数，如果oset不为空，则把当前信号屏蔽字保存到oset中。
+
+- `int sigpending(sigset_t *set);`
+
+  - 该函数的作用是将被阻塞的信号中停留在待处理状态的一组信号写到参数set指向的信号集中，成功调用返回0，否则返回-1，并设置errno表明错误原因。
+
+- `int sigsuspend(const sigset_t *sigmask);`
+
+  - 该函数通过将进程的屏蔽字替换为由参数sigmask给出的信号集，然后挂起进程的执行。注意操作的先后顺序，是先替换再挂起程序的执行。程序将在信号处理函数执行完毕后继续执行。如果接收到信号终止了程序，sigsuspend()就不会返回，如果接收到的信号没有终止程序，sigsuspend()就返回-1，并将errno设置为EINTR。
+
+
 
 
 ## 进程
@@ -1533,3 +1581,122 @@ int main(int argc, char **argv)
 
 对打开文件的处理与每个描述符的exec关闭标志值有关，进程中每个文件描述符有一个exec关闭标志（FD_CLOEXEC），若此标志设置，则在执行exec时关闭该描述符，否则该描述符仍打开。除非特地用fcntl设置了该标志，否则系统的默认操作是在exec后仍保持这种描述符打开，利用这一点可以实现I/O重定向。
 
+### 一个system()的自主实现
+不进行信号屏蔽版**shell.0.0.2.c**
+```c
+int my_system(char *command)
+{
+    int status;
+    pid_t childPid;
+    switch (childPid = fork())
+    {
+    case /* constant-expression */ -1:
+        /* code */ return -1;
+        break;
+    case 0:
+        execl("/usr/bin/zsh", "zsh", "-c", command, NULL);
+        _exit(127);
+    default:
+        if (waitpid(childPid, &status, 0) == -1)
+            return -1;
+        else
+            return status;
+    }
+}
+```
+
+不进行信号屏蔽可能会引发竞争状态 下文有解释
+
+
+进行信号屏蔽版**shell.0.0.2.c**
+```c
+#include <unistd.h>
+#include <signal.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <errno.h>
+#include <stdio.h>
+#include <wait.h>
+#include <stdlib.h>
+#include <string.h>
+
+int my_system(const char *command)
+{
+    sigset_t blockMaxk, origMask;//声明信号集
+    struct sigaction saIgnore, saOrigQuit, saOrigInt, saDefault;//声明sigaction结构体存放 先前的 目标的 信号处理程序
+    pid_t childPid;
+    int status, savedErrno;
+    // 声明savedErrno 是存放先前的errno值 避免在执行system时 将errno的值修改
+
+    if (command == NULL)   return system(":") == 0;
+
+    sigemptyset(&blockMaxk);//将信号集初始化为空
+    sigaddset(&blockMaxk, SIGCHLD);//将signo添加到信号集中
+    sigprocmask(SIG_BLOCK, &blockMaxk, &origMask);
+    //将原先的信号屏蔽字存储在origMask中 将blockMask中的信号设置为当前的信号屏蔽字
+
+
+    saIgnore.sa_handler = SIG_IGN;//将saIgnore的信号处理程序设置为忽略信号
+    saIgnore.sa_flags = 0;//信号掩码为0
+    sigemptyset(&saIgnore.sa_mask);//将saIgnore的信号集合设置为空
+    sigaction(SIGINT, &saIgnore, &saOrigInt);
+    sigaction(SIGQUIT, &saIgnore, &saOrigInt);
+    //将原来对信号的操作保存到 saOrinInt 结构体中
+    //将新的信号处理程序改为 saIgnore 
+
+    switch (childPid = fork())
+    {
+    case -1:
+        status = -1;
+        break;
+    case 0:
+        saDefault.sa_handler = SIG_DFL;
+        saDefault.sa_flags = 0;
+        sigemptyset(&saDefault.sa_mask);
+
+        if (saOrigInt.sa_handler != SIG_IGN)
+            sigaction(SIGINT, &saDefault, NULL);
+        if (saOrigInt.sa_handler != SIG_IGN)
+            sigaction(SIGQUIT, &saDefault, NULL);
+
+        sigprocmask(SIG_SETMASK, &origMask, NULL);
+
+        execl("/bin/sh", "sh", "-c", command, (char *)NULL);
+        _exit(127);
+
+    default:
+        while (waitpid(childPid, &status, 0) == -1)
+        {
+            /* code */
+            if (errno != EINTR)
+            {
+                status = -1;
+                break;
+            }
+        }
+        break;
+    }
+    savedErrno = errno;
+
+    sigprocmask(SIG_SETMASK, &origMask, NULL);
+    sigaction(SIGINT, &saOrigInt, NULL);
+    sigaction(SIGQUIT, &saOrigInt, NULL);
+
+    errno = savedErrno;
+
+    return status;
+}
+```
+#### 为什么要在执行system()函数时进行信号屏蔽
+- **在system()内部正确处理信号**
+给 system()的实现带来复杂性的是对信号的正确处理。
+
+首先需要考虑的信号是 **SIGCHLD**。假设调用 system()的程序还直接创建了其他子进程，
+对 SIGCHLD 的信号处理器自身也执行了 wait()。在这种情况下，当由 system()所创建的子进程退出并产生 SIGCHLD 信号时，在 system()有机会调用 waitpid()之前，主程序的信号处理器程序可能会率先得以执行（收集子进程的状态）。这是**竞争条件**的又一例证。这会产生两种不良后果。
+- 调用程序会误以为其所创建的某个子进程终止了。
+- system()函数却无法获取其所创建子进程的终止状态。
+**所以，system()在运行期间必须阻塞 SIGCHLD 信号。**
+
+简而言之 即system()也有可能创建子进程 其子进程返回时产生的**SIGCHLD**信号有可能会被调用system()的进程的信号信号处理程序所捕获 但system()同时也想捕获子进程的退出状态 
+引发了 **竞争状态** 
+所以 要进行信号**SIGCHLD**的屏蔽
