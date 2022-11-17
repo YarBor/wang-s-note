@@ -1732,3 +1732,72 @@ int my_system(const char *command)
 简而言之 即system()也有可能创建子进程 其子进程返回时产生的**SIGCHLD**信号有可能会被调用system()的进程的信号信号处理程序所捕获 但system()同时也想捕获子进程的退出状态 
 引发了 **竞争状态** 
 所以 要进行信号**SIGCHLD**的屏蔽
+
+## 线程
+### 概述
+在多线程程序中,多个线程并发自同一程序.
+- 所有线程共享相同的全局变量和堆变量,
+- **但**每个线程都有用来存放局部变量的私有栈,
+- 同一进程的线程还共享包括进程ID、打开的文件描述符、信号处置、当前工作目录以及资源限制
+
+进程和线程之间的主要区别在，线程比进程更容易共享信息，这也是众多进程和线程选择的原因，
+
+- 可以使用`pthread_create()`来创建进程 每个线程最后可以调用`pthread_exit()`独立 **退出**//不是返回
+- 任一线程进行exit()时将退出整个程序
+- 可以通过pthread_detach()使目标线程处于分离状态
+- 也可以通过pthread_join()连接该线程，由其返回该分离线程的退出状态
+
+进阶信息 
+更多的线程概念
+### pthreads API
+数据类型| 描述
+-      |     --
+**pthread_t** | 线程ID
+**pthread_mutex_t** | 互斥对象
+**pthread_mutexattr_t** | 互斥属性对象
+**pthread_cond_t** |条件变量
+**pthread_condattr_t** |条件变量的属性对象
+**pthread_key_t** | 线程特有数据的键
+**pthread_once_t** |一次性初始化控制上下文
+**pthread_attr_t** | 线程的属性对象
+
+- **关于errno**
+在线程中 每个线程总会有属于自己的errno;
+
+- **关于pthreads函数返回值** 
+  -  系统调用和库函数中返回状态:返回0表示成功 返回-1表示失败,并设置errno以标识错误 
+   - 但pthread API反其道而行 所有pthread函数均以返回0表示成功 **返回正值表示失败**
+     -  此正值和错误时errno值相同可以通过自己实现的errExitEN()函数表示错误(**因为多线程对errno的每次引用都会带来函数调用的开销**)
+     -  ```c
+        pthread_t *thread;
+        int s ;
+
+        s = pthread_create(&thread,NULL,func,&arg);
+        if(s!=0)
+            errExitEN(s,"pthread_create");
+        ```
+
+
+- 编译 Pthreads 程序
+在 Linux 平台上，在编译调用了 Pthreads API 的程序时，需要设置 **cc-pthread** 的编译选项。使用该选项的效果如下。
+    - 定义_REENTRANT 预处理宏。这会公开对少数可重入（reentrant）函数的声明。
+    - 程序会与库 libpthread 进行链接（等价于-lpthread）。
+
+### 创建线程 /pthraed_create()
+启动程序时 只会有单个线程 被称为初始线程或主线程
+- 函数pthread_create()负责创建一条新线程
+
+```c
+#include <pthread.h>
+int pthread_create(pthread_t *thread ,const pthread_attr_t *attr,void*(*start)(void*),void*arg);
+
+```
+新线程通过调用带有`arg`参数的`start(arg)`而开始执行
+调用`pthread_create()`的线程将通过之前的编码进行执行
+参数`arg`是`void*`类型意在可以将任意对象的指针传给`start()`函数,一般来说 其指向一个全局或者堆变量 也可以是NULL 如果需要传递多个参数 可以将`arg`指向一个结构 该结构的各个字段对应于带传参的参数.通过谨慎的类型强制转换 `arg`甚至可以传递int类型的值
+> 严格来说 对于int和void*之间的强制转换 大部分编译器是允许的 
+> 即`int j == (int)((void*)j)`
+
+>?? 没看明白
+> 
+> 将经强制转换的整型数作为线程 start 函数的返回值时，必须小心谨慎。原因在于，取消线程（见第 32 章）时的返回值 PTHREAD_CANCELED，通常是由实现所定义的整型值，再经强制转换为 void*。若线程某甲的 start 函数将此整型值返回给正在执行 pthread_join()操作的线程某乙，某乙会误认为某甲遭到了取消。应用如果采用了线程取消技术并选择将 start 函数的返回值强制转换为整型，那么就必须确保线程正常结束时的返回值与当前 Pthreads 实 现 中 的PTHREAD_CANCELED 不同。如欲保证程序的可移植性，则在任何将要运行该应用的实现中，
