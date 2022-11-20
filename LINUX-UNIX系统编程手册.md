@@ -12,7 +12,7 @@ IO多路复用（重点学epoll）
 
     4,5.2-5.5,15,18  --重点
 ********************************************************
-## 系统文件IO
+# 系统文件IO
 所有执行I/O操作的系统调用都以文件描述符,来指代打开的文件.针对每个进程文件描述符都自成一套  
 大多数程序都期望使用3种文件描述符  
 文件描述符|用途|POSIX名称|stdio流
@@ -22,9 +22,9 @@ IO多路复用（重点学epoll）
    3|标准错误|STDERR_FILENO|stderr
 
 在程序中指代这些文件描述符时,可以使用数字(012)表示,或采用<unistd.h>定义的标准名称  
-### **执行文件 I/O 操作的 4 个主要系统调用**
+## **执行文件 I/O 操作的 4 个主要系统调用**
 > 编程语言和软件包通常会利用 I/O 函数库对它们进行间接调用  
-#### ***fd = open(pathname,flags,mode);***  
+### ***fd = open(pathname,flags,mode);***  
 函数打开pathname所标识的文件,并返回文件描述符  
 用以在后续函数中指代打开的文件.如果文件不存在，open()函数可以创建之，这取决于对位掩码参数 flags 的设置。flags 参数还可指定文件的打开方式：只读、只写亦或是读写方式。mode 参数则指定了由 open()调用创建文件的访问权限，如果 open()函数并未创建文件，那么可以忽略或省略 mode 参数  
 flags参数表示打开文件所采用的操作，我们需要注意的是：必须指定以下三个常量的一种，且只允许指定一个
@@ -63,11 +63,11 @@ mode参数表示设置文件访问权限的初始值，和用户掩码umask有�
 文件权限由open的mode参数和当前进程的umask掩码共同决定。
 第三个参数是在第二个参数中有O_CREAT时才作用，如果没有，则第三个参数可以忽略
 
-#### ***numread = read(fd,buffer,count)***  
+### ***numread = read(fd,buffer,count)***  
 调用从 fd 所指代的打开文件中读取至多 count 字节的数据，并存储到 buffer 中。read()调用的返回值为实际读取到的字节数。如果再无字节可读（例如：读到文件结尾符 EOF 时），则返回值为 0  
-#### ***numwritten = write(fd,buffer,count)***  
+### ***numwritten = write(fd,buffer,count)***  
 调用buffer中count字节的数据写入由fd所指向的以打开文件中.write()调用的返回值为实际写入文件的字节数,可能小于count.  
-####  ***status = close(fd)***  
+###  ***status = close(fd)***  
 在文件所有操作完成后,调用close()释放文件描述符fd以及与之相关的核心资源  
 ```c
 使用I/O系统调用
@@ -116,7 +116,7 @@ int main(int argc,char ** argv)
     exit(EXIT_SUCCESS);
 }
 ``` 
-#### open()
+### open()
 * **int open(const char* pathname ,int flags, ... )**   
     * Return file descriptor on success , or -1 on error 
 
@@ -126,7 +126,7 @@ flag为掩码,用于指定文件的访问模式
 > O_RDONLY 只读
 > O_WRONLY 只写
 > O_RDWR   读写  
-#### read()
+### read()
 * ***ssize_t read(int fd, char *buffur,size_t count );***
     * Returns the number of bytes read,0 on EOF,-1 on error.
  
@@ -136,17 +136,17 @@ count参数指定最多能读取的字节数.(size_t数据类型属于无符号�
 > read()能够从文件中读取任意序列的字节。有些情况下，输入信息可能是文本数据，但在其他情况下，又可能是二进制整数或者二进制形式的 C语言数据结构。read()无从区分这些数据，故而也无法遵从 C 语言对字符串处理的约定，在字符串尾部追加标识字符串结束的空字符。如果输入缓冲区的结尾处需要一个表示终止的空字符，必须显式追加  
 > 因此 由于表示字符串终止的空字符需要一个字节的内存，所以缓冲区的大小至少要比预计读取的最大字符串长度多出 1 个字节  
 
-#### write()
+### write()
 * ***ssize_t write(int fd,void\* buffer ,size_t count);***
     * Returns number of bytes written , or -1 on error.  
 
 write()调用的参数含义与 read()调用相类似。*buffer 参数为要写入文件中数据的内存地址*，*count参数为欲从 buffer 写入文件的数据字节数*，**fd 参数为一文件描述符，指代数据要写入的文件**。
 如果 write()调用成功，将返回实际写入文件的字节数，该返回值可能小于 count 参数值。这被称为“部分写”。对磁盘文件来说，造成“部分写”的原因可能是由于磁盘已满，或是因为进程资源对文件大小的限制。  
 
-#### close()
+### close()
 close()系统调用关闭一个打开的文件描述符，并将其释放回调用进程，供该进程继续使用。当一进程终止时，将自动关闭其已打开的所有文件描述符
 * **显式关闭不再需要的文件描述符往往是良好的编程习惯**，会使代码在后续修改时更具可读性，也更可靠。进而言之，文件描述符属于有限资源，因此文件描述符关闭失败可能会导致一个进程将文件描述符资源消耗殆尽。在编写需要长期运行并处理大量文件的程序时，比如 shell 或者网络服务器软件，需要特别加以关注 
-#### lseek()
+### lseek()
 对于每个打开的文件，系统内核会记录其文件偏移量，有时也将文件偏移量称为读写偏移量或指针。文件偏移量是指执行下一个 read()或 write()操作的文件起始位置，会以相对于文件头部起始点的文件当前位置来表示。文件第一个字节的偏移量为 0。
 * ***off_t lseek(inf fd,off_t offser,int wherece)***  
 offset 参数指定了一个以字节为单位的数值。（SUSv3 规定 off_t 数据类型为有符号整型数。）whence 参数则表明应参照哪个基点来解释 offset 参数，应为下列其中之一：
@@ -228,15 +228,15 @@ int main(int argc ,char** argv)
     exit(EXIT_SUCCESS) ;
 }
 ```
-### $深入探究文件I/O  
-#### 原子操作 
+## $深入探究文件I/O  
+### 原子操作 
 将某一系统调用所要完成的各个动作做为不可中断的操作,一次性加以执行.是许多系统调用的一正常执行的必要条件 .  
 * 原子操作和竞争条件 
 所有的系统调用都是以原子操作执行的,是指内核保证了某系统调用中的所有步骤会作为独立操作而一次性加以执行，其间不会为其他进程或线程所中断  
 **特别是他规避了竞争状态** 
 竞争状态是指操作共享资源的两个进程或线程 随机获得cpu的使用顺序  
 
-#### 文件控制操作 : ***fcntl()***  
+### 文件控制操作 : ***fcntl()***  
 函数原型: 
 1. **int fcntl ( int fd, int cmd ) ;**
 2. **int fcntl ( int fd , int cmd , long arg ) ;**
@@ -280,7 +280,7 @@ if(accessMode==O_WRONLY || accessMode == O_RDWR)
 
 两个不同的文件描述符,若指向同一打开文件句柄,将共享同一文件偏移量.因此,若通过其中的
 
-#### 复制一个现存的文件描述符。
+### 复制一个现存的文件描述符。
 dup/dup2函数:  
 ```c
 #include <unistd.h> 
@@ -296,7 +296,7 @@ int dup2(int oldfd, int newfd);
 dup(oldfd) == fcntl(oldfd, F_DUPFD,0);
 dup2(oldfd, newfd) == close(oldfd);fcntl(oldfd, F_DUPFD,newfd);
 
-#### 在文件特定偏移量处IO:pread()/pwrite()  
+### 在文件特定偏移量处IO:pread()/pwrite()  
 *并非文件指针所在,而在调用时的输入的偏移量处*
 **定义:>** 
 ```c
@@ -316,7 +316,7 @@ lseek(fd,orig,SEEK_SET);    //返回最初的偏移量
 ```
 ***多线程应用为这些系统调用提供了用武之地***。正如第 29 章所述，**进程下辖的所有线程将共享同一文件描述符表**。这也意味着每个已打开文件的文件偏移量为所有线程所共享。**当调用pread()或 pwrite()时，多个线程可同时对同一文件描述符执行 I/O 操作，且不会因其他线程修改文件偏移量而受到影响**。如果还试图使用 lseek()和 read()(或 write())来代替 pread()（或pwrite()），那么将引发竞争状态   .
 
-#### 分散输入和集中输入  readv()与writev()函数
+### 分散输入和集中输入  readv()与writev()函数
 readv(),writev()函数系统调用分别实现了分散输入和集中输出的功能.
 ```c
 #include <sys/uio.h>
@@ -331,19 +331,19 @@ ssize_t writev(int fd,const struct iovec * iov,int iovcnt);
 ```
 ***readv和writev函数用于在一次函数调用中读、写多个非连续缓冲区***。有时也将这两个函数称为散布读（scatter read）和聚集写（gather write）。  
 * 应用场景:   以writev为例，在实现http服务器时，返回响应报文需要准备的数据有：响应行、响应头、响应空行、响应体。通常的处理方式为：将前三者放入同一写缓存空间，而响应体可能是客户端请求的一个文件，自然属于单一的缓存空间。对于这种情况，就可以使用writev同时处理两块buffer，且writev是按序处理，可以自然的把响应体放到最后
-##### readv()
+#### readv()
 `ssize_t readv(int fd,const struct iovec * iov,int iovcnt);`
         `// returns the number of bytes read, 0 on EOF, -1 on error`
 * 功能: 从文件描述符fd关联的文件中读取数据到iov指向的buffer中  
 * 描述: iov标识的buffer是iovec结构体类型的数组,iovcnt表示数组的最大长度,读取时,按数组顺序存储数据,即iov[0],先于iov[1],如果数据量不够存满整个数组,则剩余部分不予存储,  
 * readv()函数属于**原子操作**
 * 返回读取字节数,读取失败返回-1;
-##### writev()
+#### writev()
 `ssize_t writev(int fd,const struct iovec * iov,int iovcnt);`
         `// Returns the  number of bytes writen ,-1 on error`
 * 功能：writev相对于readv就相当于write对于read，把iov指向的数组空间中的内容写入fd关联的文件，同样也是原子操作。  
 * 返回写入字节数 ,写入失败返回-1;  
-##### 在指定的文章偏移量处致敬分散输入和集中输出
+#### 在指定的文章偏移量处致敬分散输入和集中输出
 ***preadv()*** / ***pwritev()*** ，  
 将分散输入/集中输出和于指定文件偏移量处的 I/O 二者集于一身
 ``` c
@@ -357,9 +357,9 @@ ssize_t pwritev(int fd,const struct iovec * iov,int iovcnt,off_t offset);
 ```
 preadv()和 pwritev()系统调用所执行的任务与 readv()和 writev()相同，但执行 I/O 的位置将由 offset 参数指定(类似于 pread()和 pwrite()系统调用)。
 ***对于那些既想从分散-集中 I/O 中受益，又不愿受制于当前文件偏移量的应用程序（比如，多线程的应用程序）而言，这些系统调用(preadv(),pwritev())恰好可以派上用场***。
-##### 总结
+#### 总结
  readv和writev，相比于read和write函数只是多了对多个buffer操作的能力。当要将一个连续区域数据写入文件时，使用write()即可，但当要将多个不同区域数据写入文件时，则使用writev()更为方便。
-#### 截断文件: truncate()和ftruncate()
+### 截断文件: truncate()和ftruncate()
 truncate()和ftruncate()系统调用将文件大小设置为length参数指定的值  
 ```c
 #include<nuistd.h>
@@ -371,7 +371,7 @@ int ftruncate(int fd,off_t length);
 两个系统调用之间的差别在于如何指定操作文件. 
 * turncate()以路径名字符串来指定文件,并要求可访问该文件,且对该文件拥有写权限. 
 * fturncate()以问文件描述符以指代该文件,并且在调用之前,须以可写方式打开操作文件,获取文件描述符以指代该文件,该系统调用不会修改文件偏移量.  
-#### 非阻塞IO
+### 非阻塞IO
 在打开文件时指定O_NINBLOCK 目的: 
 1. 若open()调用未能立即打开文件 ,则返回错误 ,而非陷入阻塞. but 有一种情况例外 即open()操作FIFO可能会陷入阻塞 
 2. 调用open()成功后,后续IO操作也是非阻塞的. 若IO系统调用未能立即完成,则可能只传入部分数据,或系统调用失败,并返回EAGAIN或EWOULDBLOCK错误.具体返回何种错误将依赖于系统调用.Linux将两个错误常量视为同义  
@@ -379,19 +379,19 @@ int ftruncate(int fd,off_t length);
 管道,FIFO,套接字,设备(终端,伪终端)都支持非阻塞状态。（因为无法通过 open()来获取管道和套接字的文件描述符，所以要启用非阻塞标志，就必须使用 5.3 节所述 fcntl()的F_SETFL 命令。）
 > FIFO:http://t.csdn.cn/wBFuZ 
 
-#### 大文件IO
+### 大文件IO
 通常来说存放文件偏移量的数据类型off_t实际上是一个有符号的长整形; 在X86-32 ~ 即32位体系架构中,将文件大小限制在2^31-1个字节(2GB)的限制下  
 然而,32位的UNIX实现有处理超过2GB大小的需求 **则提出了*LFS*的增强特性**
 * 应用程序可使用如下两种方式之一以获得 LFS 功能。
 *   1. 使用支持大文件操作的备选 API。该 API 由 LFS 设计，意在作为 SUS 规范的“过渡型扩展”。因此，尽管大部分系统都支持这一 API，但这对于符合 SUSv2 或 SUSv3 规范的系统其实并非必须。这一方法现已过时。
 *   2.  在编译应用程序时，将宏_FILE_OFFSET_BITS 的值定义为 64。这一方法更为可取，因为符合 SUS 规范的应用程序无需修改任何源码即可获得 LFS 功能。
-##### 过度型LFS API
+#### 过度型LFS API
 要使用过渡型LFS API **必须在编译程序时定义_LARGEFILE64_SOURCE 功能测试宏,该定义可以通过命令行指定,也可以定义于源文件中包含所有头文件之前的位置**  
  该 API 所属函数具有处理 64 位文件大小和文件偏移量的能力。这些函数与其 32 位版本命名相同，只是尾部缀以 64 以示区别。其中包括：fopen64()、open64()、lseek64()、truncate64()、stat64()、mmap64()和 setrlimit64()
-##### 向printf()传输off_t值 
+#### 向printf()传输off_t值 
 对于于定义的值,展示其值的方式是将其转化为long类型 使用%ld
 但对于 LFS功能的off_t,则需要将其转换为longlong类型 使用%lld 
-#### /dev/fd目录
+### /dev/fd目录
 对于每个进程,内核都提供一个特殊的虚拟目录/dev/fd.该目录包含"/dev/fd/n"形式的文件名,其中n是与进程中的打开文件描述符相对应的编号.因此,例如,/dev/fd/0则对应的是该进程的标准输入  
 ```c
 下面两行代码是等价的 
@@ -411,7 +411,7 @@ fd=dup(1);
 使用/dev/fd 目录，上述问题将迎刃而解，可以把标准输入、标准输出和标准错误作为文件名参数传递给任何需要它们的程序。所以，可以将前一个 shell 命令改写成如下形式：
 `$ ls | diff /dev/fd/0/ oldfilelist`
 方便起见，系统还提供了 3 个符号链接：/dev/stdin、/dev/stdout 和/dev/stderr，分别链接到/dev/fd/0、/dev/fd/1 和/dev/fd/2
-#### 创建临时文件 
+### 创建临时文件 
 很多程序需要创建一些临时文件,仅供其在运行期间使用,程序终止后即删除. 
 例如: mkstemp()和tmpfile()。
 ```c
@@ -440,7 +440,7 @@ if(close(fd)==-1)  errExit("close");
 FILE *tmpfile(void)
 ```
 tmpfile()函数执行成功，将返回一个文件流供 stdio 库函数使用。文件流关闭后将自动删除临时文件。为达到这一目的，tmpfile()函数会在打开文件后，**从内部立即调用 unlink()来删除该文件名**
-#### 总结
+### 总结
 本章介绍了原子操作的概念，这对于一些系统调用的正确操作至关重要。 
 特别是，**指定O_EXCL 标志调用 open()，这确保了调用者就是文件的创建者**。  
 而**指定 O_APPEND 标志来调用 open()，还确保了多个进程在对同一文件追加数据时不会覆盖彼此的输出**。
@@ -458,8 +458,8 @@ tmpfile()函数执行成功，将返回一个文件流供 stdio 库函数使用�
 运用虚拟目录/dev/fd 中的编号文件，进程就可以通过文件描述符编号来访问自己打开的文件，这在 shell 命令中尤其有用。
 
 **mkstemp()和 tmpfile()函数允许应用程序去创建临时文件**
-### 文件I/O---->缓冲
-#### 文件IO的内核缓冲:缓冲区高速缓存 
+## 文件I/O---->缓冲
+### 文件IO的内核缓冲:缓冲区高速缓存 
 read()和write()**系统调用在操作磁盘文件时不会直接发起磁盘访问,而是在用户缓冲区与内核缓冲区高速缓存之间复制数据**  
 例如: 如下调用将3个字节的数据从用户空间传递到内核空间的缓冲区中: 
 `write(fd,"asd",3);`
@@ -469,14 +469,14 @@ write()随即返回. 在后续的某个时刻,内核会将缓冲区的数据写�
 **采用这一设计，意在使 read()和 write()调用的操作更为快速**，因为它们不需要等待（缓慢的）磁盘操作  
 
 Linux内核对缓冲区的大小没有固定的上限,其仅受限于两个因素:可用于的物理内存 以及出于其他目的对物理内存的需求. 若可用内存不足,内核会将一些修改过后的缓存区高速缓存页刷新到磁盘,并释放其供系统重用;  
-###### 缓冲区大小对IO系统调用性能的影响
+##### 缓冲区大小对IO系统调用性能的影响
 当传输总量相同时 缓冲区大小为 1 字节时，需要调用 read()和 write()1亿次，缓冲区大小为 4096 个字节时，需要调用 read()和 write() 24000 次左右，几乎达到最优性能。设置再超过这个值，对性能的提升就不显著了，这是因为与在用户空间和内核空间之间复制数据以及执行实际磁盘 I/O 所花费的时间相比，read()和 write() 系统调用的成本就显得微不足道了
   *总之，如果与文件发生大量的数据传输，通过采用大块空间缓冲数据，以及执行更少的系统调用，可以极大地提高 I / O 性能*。 
-#### stdio库的缓冲
-###### 简介
+### stdio库的缓冲
+##### 简介
 **当操作磁盘文件时，缓冲大块数据以减少系统调用，C 语言函数库的 I/O 函数（比如，fprintf()、fscanf()、fgets()、fputs()、fputc()、fgetc()）正是这么做的**。因此，使用 stdio 库可以使编程者免于自行处理对数据的缓冲，无论是调用 write()来输出，还是调用 read()来输入。
-##### 设置一个stdio流的缓冲模式  
-###### setvbuf()函数:
+#### 设置一个stdio流的缓冲模式  
+##### setvbuf()函数:
 调用setvbuf()函数,可以控制stdio库使用的缓冲的形式. 
 ```c
 #include <stdio.h>
@@ -495,7 +495,7 @@ int setvbuf(FILE * stream,char *buf,int mode,size_t size);
     采用行缓冲 I/O。指代终端设备的流默认属于这一类型。对于输出流，在输出一个换行符（除非缓冲区已经填满）前将缓冲数据。对于输入流，每次读取一行数据。
     * **_IOFBF**
     采用全缓冲 I/O。单次读、写数据（通过 read()或 write()系统调用）的大小与缓冲区相同。指代磁盘的流默认采用此模式  
-###### setbuf()函数:
+##### setbuf()函数:
 setbuf()函数构建在setvbuf()之上,执行了类似任务
 ```c
 #include<stdio.h>
@@ -503,7 +503,7 @@ void setbuf(FILE *stream, char *buf);
 ```
 `setbuf(fp,buf)`调用除了不返回函数结果外，就相当于
 `setvbuf (  fp,(buf==NULL) ? _IONBF : _IOFBF,BUFSIZ ) ;`
-##### fflush()刷新stdio缓冲区
+#### fflush()刷新stdio缓冲区
 无论当前采用何种缓冲形式,都可以用fflush()函数强制将stdio输出流中的数据强制刷新到内核缓冲区中.
 ```c
 #include <stdio.h>
@@ -513,9 +513,9 @@ int fflush(FILE* stream);
 也能将fflush()函数应用于输入流,这将丢弃以缓冲的输入数据 
 当关闭相应流时 自动刷新stdio缓冲区.
 > 在包括 glibc 库在内的许多 C 函数库实现中，若 stdin 和 stdout 指向一终端，那么无论何时从 stdin 中读取输入时，都将隐含调用一次 fflush(stdout)函数。这将刷新写入 stdout 的任何提示，但不包括终止换行符（比如，printf("Date：")）。然而，SUSv3 和 C99 并未规定这一行为，也并非所有的 C 语言函数库都实现了这一行为。要保证程序的可移植性，应用应使用显式的 fflush(stdout)调用来确保显示这些提示。
-#### 控制文件IO的内核缓冲
+### 控制文件IO的内核缓冲
 强制刷新内核缓冲区到输出文件是可能的,并且有时很重要
-##### 同步IO数据完整性和同步IO文件完整性
+#### 同步IO数据完整性和同步IO文件完整性
 同步I/O完成-定义为：**某一 I/O 操作，要么已成功完成到磁盘的数据传递，要么被诊断为不成功**
 SUSv3 定义的第一种同步 I/O 完成类型是 **synchronized I/O *data* integrity completion** ，旨在确保针对文件的一次更新传递了足够的信息（到磁盘），以便于之后对数据的获取  
 * 就读操作而言，这意味着被请求的文件数据已经（从磁盘）传递给进程
@@ -524,28 +524,28 @@ SUSv3 定义的第一种同步 I/O 完成类型是 **synchronized I/O *data* int
 
 > * data 类型是指将**足够的信息**(data)传到磁盘  
 > * file 类型是将**所有文件信息**(file)传到磁盘 
-##### 用于控制文件IO内核缓冲的系统调用函数  
-###### fsync()
+#### 用于控制文件IO内核缓冲的系统调用函数  
+##### fsync()
 * fsync()系统调用将使缓冲数据和与打开文件描述符 fd 相关的所有元数据都刷新到磁盘上。调用 fsync()会强制使文件处于 Synchronized I/O **file** integrity completion 状态。(data的超集)
 ```c
 #include <unistd.h>
 int fsync(int fd);  // return 0 to success,-1 to error;
 ```
 仅在对磁盘设备（或者至少是其高速缓存）的传递完成后，fsync()调用才会返回。
-###### fdatasync()
+##### fdatasync()
 * fdatasync()系统调用的运作类似于fsync() ，只是强制文件处于ynchronized I/O **data** integrity completion 的状态。
 ```c
  #include <unistd.h>
  int fdatasync(int fd); //  returns 0 to success , -1 on error;
  ```
 
-##### 通过 open的flag 使所有同步写入:
-###### --> O_SYNC
+#### 通过 open的flag 使所有同步写入:
+##### --> O_SYNC
 调用open()函数时指定O_SYNC 则会使所有后续输出同步
 `fd=open(payhname,O_SYNC|O_WRONLY) `
 在调用open函数时添加O_SYNC 之后的每个write函数将会自动将文件数据和元数据刷新到磁盘上(即 按照*************data**************模式进行操作)
 采用 O_SYNC 标志（或者频繁调用 fsync()、fdatasync()或 sync()）对性能的影响极大
-###### --> O_DSYNC 和 O_RSYNC 标志
+##### --> O_DSYNC 和 O_RSYNC 标志
 同样的 SUSv3 规定了两个与同步IO相关的打开文件标志状态 O_DSYNC 和 O_RSYNC 
 * O_DSYNC 标志要求按照(****************data****************模式执行)
 * O_SYNC 标志要求按照(****************file****************模式执行)
@@ -553,13 +553,13 @@ int fsync(int fd);  // return 0 to success,-1 to error;
     * 同时指定 O_RSYNC 和 O_DSYNC 标志，那么就意味着会遵照 synchronized I/O data integrity completion （即，在执行读操作之前，像执行 O_DSYNC 标志一样完成所有待处理的写操作）
     * 同时指定 O_RSYNC 和 O_SYNC 标志，则意味着会遵照 synchronized I/O file integritycompletio （即，在执行读操作之前，像执行 O_RSYNC 标志一样完成所有待处理的写操作）  
 
-##### IO缓冲小节
+#### IO缓冲小节
 ![截图 2022-10-19 09-31-42.png](https://s2.loli.net/2022/10/19/B4vRx9aYgnPimQj.png)
 
-##### 绕过缓冲区直接IO
+#### 绕过缓冲区直接IO
 直接 I/O 只适用于有特定 I/O 需求的应用。例如数据库系统，其高速缓存和 I/O 优化机制均自成一体，无需内核消耗 CPU 时间和内存去完成相同任务。
 * 直接IO的使用方式是---> **用open()打开文件或设备时指定O_DIRECT标志**
-###### 直接IO的对齐限制
+##### 直接IO的对齐限制
 因为直接IO涉及对磁盘的直接访问,所以在执行IO时 需要遵守以下限制  
 * 用于数据传递的缓冲区,其边界必须对齐为块的整数倍大小 
 * 数据传输的开始点,即文件设备的偏移量 ,必须为块的大小的整数倍 
@@ -567,25 +567,26 @@ int fsync(int fd);  // return 0 to success,-1 to error;
 
 不遵守上述任一限制将EINVAL错误,(上述 块大小为物理块的大小)
 
-#### 混合使用库函数与系统调用进行IO操作
+### 混合使用库函数与系统调用进行IO操作
 ```c
-#include <stdio.h>
+
+ #include <stdio.h>
 int fileno(FILE* stream);
                 return file descriptor on success , or -1 on error
 FILE* fdopen(int fd,const char * mode);
                 return (new) file opinter on success , or NULL on error
-```
-##### fileno()
+ ```
+#### fileno()
 给定一个文件流 返回他相应的文件描述符(即stdio库在流上已经打开的文件描述符) 
 随即可以在read()write()dup()fcntl()系统调用中正常使用该文件描述符;
-##### fdopen()
+#### fdopen()
 与fileno()函数功能相反.给定一个文件描述符,该函数创建了一个使用该描述符进行文件IO想相应流.返回一个(文件)流,mode参数和fopen参数中mode参数相同(w a r,写 追加 读...)
 如果 该文件描述符 与函数中mode的访问模式不一致,则对fdopen()函数的调用失败   
 **fdopen函数对非常规文件描述符很有用 在创建套接字和管道的系统调用总是返回文件描述符**.为了在这些文件类型上使用stdio的库 则必须使用fdopen()函数创建相应的文件流  
-##### 混合使用的缓冲问题
+#### 混合使用的缓冲问题
 ***在进行库调用和系统调用时,应将缓冲问题牢记***IO的系统调用将直接吧数据冲到内核缓冲区高速缓存,而stdio库函数需要等待用户空间的缓冲区填满时,再调用write()函数将缓冲区数据从入内核缓冲区高速缓存  
 将IO系统调用和stdio函数混合使用时,**使用fflush()来规避这些问题**,同时**也可以使用setvbuf()或setbuf()函数使缓冲区失效** 但这么做会影响IO性能 因为每次输出操作将引起一次write()系统调用
-#### 总结
+### 总结
 输入输出数据的缓冲由内核和 stdio 库完成。有时可能希望阻止缓冲，但这需要了解其对应用程序性能的影响。可以使用各种系统调用和库函数来控制内核和 stdio 缓冲，并执行一次性的缓冲区刷新。
 
 在 Linux 环境下，open()所特有的 O_DIRECT 标识允许特定应用跳过缓冲区高速缓存。
@@ -593,15 +594,15 @@ FILE* fdopen(int fd,const char * mode);
 在对同一个文件执行 I/O 操作时，**fileno()和 fdopen()有助于系统调用和标准 C 语言库函数的混合使用**。给定一个流，fileno()将返回相应的文件描述符，fdopen()则反其道而行之，针对指定的打开文件描述符创建一个新的流。
 
 ***
-## 系统编程
-###  系统编程概念
-#### 文件系统结构 
+# 系统编程
+##  系统编程概念
+### 文件系统结构 
 图示磁盘分区和文件系统之间的关系,以及一般文件系统的组成
 ![截图 2022-10-19 11-47-22.png](https://s2.loli.net/2022/10/19/zFBw48TyZjn5DVe.png)
 文件系统由以下部分组成 
-##### 引导块 
+#### 引导块 
 作为文件系统的首块.引导块不为文件系统所用,只是包含引导操作系统的信息.操作系统只需要一个引导块,但所有文件系统都设有引导块
-##### 超级块
+#### 超级块
 紧随引导块之后的一个独立块,包含文件系统有关的参数信息,其中包括:>
 * -i 节点容量
 * \- 文件系统中的逻辑块大小;
@@ -609,11 +610,11 @@ FILE* fdopen(int fd,const char * mode);
 驻留于同一物理设备上的不同文件系统,其类型.大小以及参数设置(块大小...)都可以有所不同.这也是将一块磁盘划分为多个分区的原因
 - \- i节点表: 文件系统的每个文件和目录在i节点表中都对应着唯一一条记录,这条记录登记了关乎文件的各种信息有时节点表称之为i-list 
 - \- 数据块:文件系统的大部分空间都用于存放数据,以构成驻留于文件系统之上的文件与目录.
-#### i 节点
+### i 节点
 针对驻留于文件系统上的每个文件，文件系统的 i 节点表会包含一个 i 节点（索引节点的简称）。对 i 节点的标识，采用的是 i 节点表中的顺续位置，以数字表示。文件的 i 节点号（或简称为 i 号）是 ls –li 命令所显示的第一列。
 `ls -li`-----* **3283416** drwxr-xr-x 5 **** **** 4096 10月 18 22:23 Desktop*
 
-##### **i(-node) 节点所维护的信息如下所示** 
+#### **i(-node) 节点所维护的信息如下所示** 
 
 - **文件类型**(常规文件.目录.符号链接.以及字符设备...)
 - **文件属主**(UID 也称 用户ID)
@@ -625,14 +626,14 @@ FILE* fdopen(int fd,const char * mode);
 - **实际分配给文件块的数量**,以512字节块为单位.不会简单等于文件的大小,有文件空洞的存在(分配给文件的块数可能要低于文件的正常大小所计算出的块数)  
 - **指向文件数据块的指针** 
 
-#### ext2 中的i-node(节点)和数据块指针
+### ext2 中的i-node(节点)和数据块指针
 类似于大多数 UNIX 文件系统，ext2 文件系统在存储文件时，数据块不一定连续，甚至不一定按顺序存放（尽管 ext2 会尝试将数据块彼此靠近存储）。为了定位文件数据块，内核在 i 节点内维护有一组指针。下图所示为在 ext2 文件系统上完成上述任务的情况
 ![截图 2022-10-19 11-47-22.png](https://s2.loli.net/2022/10/19/zFBw48TyZjn5DVe.png)
 > 碎片化的存储方式 使得对磁盘的文件利用的效率更高
 
 这一貌似复杂的系统，其设计意图是为了满足多重需求。首先，该系统在维持 i 节点结构大小固定的同时，支持任意大小的文件。其次，文件系统既可以以不连续方式来存储文件块，又可通过 lseek()随机访问文件，而内核只需计算所要遵循的指针。最后，对于在大多数系统中占绝对多数的小文件而言，这种设计满足了对文件数据块的快速访问：通过 i 节点的直接指针访问，一击必中。
 
-#### 虚拟文件系统(vfs)
+### 虚拟文件系统(vfs)
 虚拟文件系统VFS 定义了一套借口.即使所有与文件交互的程序都会按照这一接口来进行操作  
 每种文件系统都会提供VFS接口的实现  
 这样以来 程序只需要理解VFS结口,而无需具体关心实现细节  
@@ -644,9 +645,9 @@ VFS接口的操作涉及文件系统和目录的所有常规系统调用相对�
  //这俩没整明白咋搞的,应该不咋用吧...
 ```
 VFS的抽象层建模精确仿照传统UNIX文件系统模型.当然,还有一些文件系统,尤其是非UNIX文件系统并不支持所有的VFS操作(微软不支持symlink()创建的链接概念)
-### 文件属性
+## 文件属性
 本章将探讨文件的各种属性（文件元数据）。首先介绍的是系统调用 stat()，可利用其返回一个包含多种文件属性的结构。然后，将描述用来改变文件属性的各种系统调用本章将在结尾处讨论 i 节点标志（也称为 ext2 扩展文件属性），可利用其控制内核对文件处理的方方面面
-#### stat() 获取文件信息
+### stat() 获取文件信息
 利用系统调用stat() \ lstat() \ fstat() 可以获取文件有关的信息,其中大部分提取自文件i节点  
 
 ```c
@@ -689,7 +690,7 @@ struct stat
     time_t      st_ctime;   /* time of last status change       -文件状态上次修改时间             */
 };
 ```
-##### stat(详细介绍)
+#### stat(详细介绍)
 - st_dev 和 st_ino  
     - st_dev 字段标识文件所驻留的设备。st_ino 字段则包含了文件的 i 节点号。利用以上两者，可在所有文件系统中唯一标识某个文件
     - dev_t 类型记录了设备的主、辅 ID。如果是针对设备的 i 节点，那么 st_rdev 字段则包含设备的主、辅 ID
@@ -704,8 +705,8 @@ struct stat
     在判断类型的时候 可以使用上图的宏(<sys/stat.h>)
 - st_*time 
     - 时间变化记录
-#### 文件时间戳
-##### 使用utime()和utimes()来改变文件时间戳
+### 文件时间戳
+#### 使用utime()和utimes()来改变文件时间戳
 
 ```c
 #include<utime.h>
@@ -724,8 +725,8 @@ int utime(const char *pathname, const struct utimbuf* buf);
 int utimes(const char *pathname, const struct timeval tv[2]);//268
 ```
 参数 pathname 用来标识欲修改时间的文件。若该参数为符号链接，则会进一步解除引用。
-### 目录与链接
-#### 目录和(硬)链接
+## 目录与链接
+### 目录和(硬)链接
 在文件系统中,目录的存储方式类似于普通文件,但目录与普通文件的区别有二
 - i-node中,目录会是一种不同的文件类型
 - 目录是经特殊组织形成的文件,本质是一个表格,包含文件名和i-node编号  
@@ -748,16 +749,16 @@ int utimes(const char *pathname, const struct timeval tv[2]);//268
 对于硬链接的限制有二 均可使用符号链接加以规避
 - 因为目录条目(硬链接)对文件的指代采用了i-node编号,而i-node编号的唯一性仅在一个文件系统之内才能得到保障,所以硬链接要与文件驻留在同一定义文件系统
 - 不能为目录创建链接,从而避免出现令诸多系统程序陷于混乱的链接环路  
-#### 符号链接(软链接)
+### 符号链接(软链接)
 符号链接,有时也称为软链接，是一种特殊的文件类型，其数据是另一文件的名称。图 18-2 展示的情况是：两个硬链接—/home/erena/this 和/home/allyn/that—指向同一个文件，而符号链接/home/kiran/other，则指代文件名/home/erena/this。
 在shell中，符号链接是由ln-s创建的。ls-F的命令输出会在符号链接的尾部标记 @ 。
 符号连接的内容可以是绝对路径，也可以是相对路径。解释相对符号链接时以链接本身的位置作为参照点。
 符号链接的地位不如硬链接。尤其是，文件的链接计数中并未将符号链接计算在内因此，如果移除了符号链接所指向的文件名，符号链接本身还将继续存在，尽管无法再对其进行解引用（下溯）操作，也将此类链接称之为悬空链接。更有甚者，还可以为并不存在的文件名创建一个符号链接。
-#### 系统调用对符号链接的解释
+### 系统调用对符号链接的解释
 诸多系统调用都会对符号链接进行解引用处理，从而对链接指向的文件展开操作，还有一些系统调用对符号链接则不作处理，直接操作于链接文件本身。书中会在论及每个系统调用的同时，描述其针对符号链接的行为。（Linux_UNIX系统编程手册--P286）
-#### 创建和移除(硬)链接--link()和unlink()
+### 创建和移除(硬)链接--link()和unlink()
 link()和unlink()系统调用分别创建和移除硬链接.
-##### link()
+#### link()
 ```c
 #include<unistd.h>
 int link(const char* oldpath,const char* newpath);
@@ -765,17 +766,17 @@ int link(const char* oldpath,const char* newpath);
 ```
 oldpath中提供的是一个已经存在的路径名,则系统调用link()将newpath参数所指向的路径名创建一个新链接.若newpath指定的路径名已然存在,则不会将其覆盖;相反会产生一个error;
 > 在 Linux 中，link()系统调用不会对符号链接进行解引用操作。若 oldpath 属于符号链接，则会将 newpath 创建为指向相同符号链接文件的全新硬链接。（换言之，newpath 也是符号链接，指向 oldpath 所指代的同一文件。）这一行为有悖于 SUSv3 规范。SUSv3 要求，除非另行规定（link()系统调用不在此列），否则所有执行路径名解析操作的函数都应对符号链接进行解引用。大多数其他 UNIX 实现的行事方式都与 SUSv3 相符。值得注意的是，Solaris 是个例外，默认情况下的行为与 Linux 相同。但若采用适当的编译器选项，又可提供符合 SUSv3 规范的行为。鉴于系统实现间的这种差异，应避免将 oldpath 参数指定为符号链接，以保障程序的可移植性。
-##### unlink()
+#### unlink()
 ```c
 #include <unistd.h>
 int unlink(const char *pathname);
                     RETURN 0 ON SUCCESS;-1 ON error
 ```
 unlink()系统调用移除一个链接（删除一个文件名），且如果此链接是指向文件的最后一个链接，那么还将移除文件本身。若 pathname 中指定的链接不存在，则 unlink()调用失败，并将errno 置为 ENOENT
-##### 仅当关闭所有文件描述符时，可删除一个已打开的文件
+#### 仅当关闭所有文件描述符时，可删除一个已打开的文件
 当移除指向文件的最后一个链接时，如果仍有进程持有指代该文件的打开文件描述符，那么在关闭所有此类描述符之前，系统实际上将不会删除该文件。这一特性的妙用在于允许取消对文件的链接，而无需担心是否有其他进程已将其打开。（然而，对于链接数已降为 0 的打开文件，就无法将文件名与其重新关联起来。）此外，基于上述事实，还可以玩点小技巧：先创建并打开一个临时文件，随即取消对文件的链接（unlink），然后在程序中继续使用该文件。
 （这正是 5.12 节所述 tmpfile()函数的所作所为。）
-#### 更改文件名 : rename()
+### 更改文件名 : rename()
 借助于rename()既可以重命名文件,又可以将文件移动至同一文件系统的另一目录.
 ```c
 #include<stdio.h>
@@ -794,8 +795,8 @@ rename()调用仅操作目录条目，而不移动文件数据
     - 若将 **oldpath 指定为目录名，则意在重命名该目录**。**这种情况下，必须保证 newpth 要么不存在，要么是一个空目录的名称**
     - **若 oldpath 是一目录，则 newpath 不能包含 oldpath 作为其目录前缀**
     - **oldpath 和 newpath 所指代的文件必须位于同一文件系统。**
-#### 使用符号连接: symlink()和readlink()
-##### symlink()
+### 使用符号连接: symlink()和readlink()
+#### symlink()
 symlink()系统调用会针对filepath所指定的路径名创建一个新的符号链接--linkpath. (移除符号链接,需使用unlink() )
 ```c
 #include<unistd.h>
@@ -804,7 +805,7 @@ int symlink(const char *filepath,const char *linkpath);
 ```
 ! 若linkpath 中给定的路径名已然存在,则调用失败(且将error设置为EEXIST).filepath指定的路径名可以是绝对路径,也可以是相对路径.
 由 filepath 所命名的文件或目录在调用时无需存在。即便当时存在，也无法阻止后来将其删除。这时，linkpath 成为“悬空链接”，其他系统调用试图对其进行解引用操作都将出错（通常错误号为 ENOENT）
-##### readlink()
+#### readlink()
 readlink()系统调用的本职工作，将符号链接字符串的一份副本置于 buffer 指向的字符数组中
 ```c
 #include<unistd.h>
@@ -814,8 +815,8 @@ ssize_t readlink(const char *pathname,char *buffer,size_t bufsize);
 bufsiz 是一个整型参数，用以告知 readlink()调用 buffer 中的可用字节数
 如果一切顺利，readlink()将返回实际放入 buffer 中的字节数。若链接长度超过 bufsiz，则置于 buffer 中的是经截断处理的字符串（并返回字符串大小，亦即 bufsiz）;
 > 由于 buffer 尾部并未放置终止空字符，故而也无法分辨 readlink()所返回的字符串到底是经过截断处理，还是恰巧将 buffer 填满。验证后者的方法之一是重新分配一块更大的 buffer，并再次调用 readlink()。另外，还可以将 pathname 的长度定义为常量 PATH_MAX (该常量定义了程序可拥有的最长路径名长度)
-#### 创建mkdir()和rmdir()
-##### mkdir()系统调用用于创建一个新目录;
+### 创建mkdir()和rmdir()
+#### mkdir()系统调用用于创建一个新目录;
 ```c
 #include <sys/stat.h>
 int mkdir(const char *pathname,mode_t mode);
@@ -823,7 +824,7 @@ int mkdir(const char *pathname,mode_t mode);
 ```
 pathname参数指定了新目录的路径名. 该名可以是相对路径, 也可以是绝对路径,若具有该路径名的文件已经存在,则调用失败并设置error
 **对该位掩码值的指定方式既可以与 open()调用相同-----对表所列各常量进行或(|)操作，也可直接赋予八进制数值**。既定的 mode 值还将于进程掩码相与（&）（参见 15.4.6 节）。另外，set-user-ID 位始终处于关闭状态，因为该位对于目录而言毫无意义。
-##### rmdir()删除一个目录
+#### rmdir()删除一个目录
 ```c
 #include <unistd.h>
 int rmdir(const char *pathname);
@@ -831,7 +832,7 @@ int rmdir(const char *pathname);
 ```
 ************要使 rmdir()调用成功，则要删除的目录必须为空************。
 如果 pathname 的最后一部分为符号链接，那么 rmdir()调用将不对其进行解引用操作，并返回错误，同时将 errno 置为 ENOTDIR。
-#### 移除一个文件或目录: remove()
+### 移除一个文件或目录: remove()
 ```c
 #include<stdio.h>
 int remove(const char *pathname);
@@ -841,9 +842,9 @@ remove()属于C语言库 而非系统调用
 - 如果pathname是文件 那么remove()将调用unlink()
 - 如果pathname是目录 那么remove()将调用rmdir()  
 与unlink()和rmdir()一样 remove()函数不会对符号链接解引用 其会直接删除符号连接本身,而非指向的文件  
-#### 读目录: opendir()和readdir()
+### 读目录: opendir()和readdir()
 本节所述库函数可用于打开一个目录并逐一获取其包含文件的名称. 
-##### opendir()/fdopendir()
+#### opendir()/fdopendir()
 用于打开一个目录,并返回指向该目录的句柄
 ```c
 #include<dirent.h>
@@ -859,7 +860,7 @@ DIR * fdopendir(int fd);
             return directory stream handle , or NULL on error
 ```
 > 提供 fdopendir()函数，意在帮助应用程序免受各种竞态条件的困扰
-##### readdir()
+#### readdir()
 ```c
 #include<dirent.h>
 
@@ -876,7 +877,7 @@ struct dirent * readdir(DIR * dirp);
 遇到目录结尾或出错 readdir()将返回NULL (出错设置errno) 
 
 
-## 信号
+# 信号
 信号分两大类 
 - 一组用于向内核通知事件 构成所谓的标准信号  Linux中标准信号编号范围是0-31 
 - 另一组由实时信号构成
@@ -909,7 +910,7 @@ struct dirent * readdir(DIR * dirp);
 无法将信号处置设置为终止进程或者核心转储//最为相似的行为是该信号安装一个处理器程序 于其中调用exit()或者abort()
 abort()函数将为进程产生一个SIGABRT信号 该信号将引发进程转储核心文件并终止
 
-### 信号类型和默认行为
+## 信号类型和默认行为
 ![](https://img-blog.csdnimg.cn/2021010821250941.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3poaXpoZW5nZ3Vhbg==,size_16,color_FFFFFF,t_70)
 ![](https://img-blog.csdnimg.cn/20210108212619741.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3poaXpoZW5nZ3Vhbg==,size_16,color_FFFFFF,t_70)
 
@@ -946,8 +947,8 @@ abort()函数将为进程产生一个SIGABRT信号 该信号将引发进程转�
     - **SIGXFSZ** 默认处理方式：终止+core/忽略；进程超过了文件大小的软限制时，产生该信号。  
 
 
-### 改变信号处置 signal()/sigaction()
-#### signal()
+## 改变信号处置 signal()/sigaction()
+### signal()
 ```c 
 #include <signal.h>
 void (*signal(int sig,void(*handler)(int)))(int );
@@ -984,7 +985,7 @@ void sighandler(int signum)
    exit(1);
 }
 ```
-#### sigaction()
+### sigaction()
 sigaction()调用比signal调用更复杂 也更灵活
 ```c
 #include<signal.h>
@@ -1053,8 +1054,7 @@ sigaction(SIGQUIT, &saIgnore, &saOrigInt);
         - 指定一个。信号集，在调用sa_handler所指向的信号处理函数之前，该信号集将被加入到进程的信号屏蔽字中。信号屏蔽字是指当前被阻塞的一组信号，它们不能被当前进程接收到
     
 
-
-### 信号处理器
+## 信号处理器
 信号处理程序 当指定信号传递给进程时会调用的一个函数. 
 调用信号处理程序,可能会随时打断主程序流程:内核代表进程来调用处理器程序
 简单信号处理器
@@ -1078,9 +1078,9 @@ int main(int argc,char ** argv)
 }
 
 ```
-##### pause()等待进程
+#### pause()等待进程
 pause会阻塞进程 直到键入某个字符
-### 发送信号: kill()
+## 发送信号: kill()
 一个进程能够使用kill()系统调用向另一进程发送信号.
 ```c
 #include<signal.h>
@@ -1090,12 +1090,12 @@ int kill(pid_t pid,int sign);
 - pid > 0 则会发送给信号由pid指定的进程
 - pid = 0 则会发送信号给与调用进程组相同的每个进程.包括将信号发送给自己
 - pid < -1 会向组ID绝对值与pid相等的进程(向一个进程组的所有进程发送信号在shell作业中有特殊用途)
-### raise()
+## raise()
 ```c
 int raise(int sign);
 ```
 向自己发送信号 
-### 信号集函数
+## 信号集函数
 
 - `int sigemptyset(sigset_t *set);`
 
@@ -1130,8 +1130,8 @@ int raise(int sign);
   - 该函数通过将进程的屏蔽字替换为由参数sigmask给出的信号集，然后挂起进程的执行。注意操作的先后顺序，是先替换再挂起程序的执行。程序将在信号处理函数执行完毕后继续执行。如果接收到信号终止了程序，sigsuspend()就不会返回，如果接收到的信号没有终止程序，sigsuspend()就返回-1，并将errno设置为EINTR。
 
 
-### 重入函数和异步函数安全
-#### 重入函数
+## 重入函数和异步函数安全
+### 重入函数
 "**安全**"即为重入函数的基本
 即无论函数何时打断 其他线程调用如何 该函数都能输出目标结果
 - 更新全局变量以及使用全局作用与的函数是不可重入的
@@ -1142,7 +1142,7 @@ int raise(int sign);
 
 所有的系统调用都是安全的函数
 
-### 异常退出
+## 异常退出
 - abort()函数
 在调用时产生核心转储文件
 
@@ -1164,8 +1164,8 @@ int raise(int sign);
 
 
 
-## 进程
-### 进程和程序
+# 进程
+## 进程和程序
 进程是一个可执行程序的实例.
 程序是包含了一系列信息的文件，这些信息描述了如何在运行时创建一个进程， 所包括的内容如下
 - 二进制格式标识：每个程序文件都包含用于描述可执行文件格式的元信息。（a.out）
@@ -1175,7 +1175,7 @@ int raise(int sign);
 - 符号表及重定位表：描述程序中函数和变量的位置及名称。
 - 其他信息
 
-#### 进程号和父进程号
+### 进程号和父进程号
 每个进程都有唯一一个进程号，进程号是一个正数，用以唯一标识系统中的某个进程。对各种系统调用而言，进程号有时可以作为传入参数有时可以作为返回值。
 - getpid()
 ```c
@@ -1194,14 +1194,14 @@ pid_t getppid(void);
 每个进程都有自己的父进程，进程号之间的属性反应了进程之间的树状关系。
 进程 1 init进程，即所有进程的始祖。使用pstree(1)命令可以查看到这一家族树
 若父进程终止，则子进程将变为孤儿，init将收留子进程对子进程的getppid()函数 将返回 1 
-#### 进程内存布局
+### 进程内存布局
 每个进程所分配的内存由很多部分组成，称之为“段”
 - 文本段 包含了进程运行的程序机器语言指令。文本段具有只读属性，以防进程通过错误指针意外修改自身指令。<!-- 因为多个进程可以同时运行同一程序 --> 所以又将文本段设为可以共享，这样一份代码的拷贝可以映射到这些进程的虚拟地址空间中
 - 初始化数据段 包含显式初始化的全局变量和静态变量. 当程序加载到内存时,从可执行程序中读取这些变量的值  
 - 未初始化数据段 包含了未进行显式初始化的全局变量和静态变量.程序启动之前,系统将本段内所有内存初始化为 0 ;
 - 栈 (stack) 是一个动态增长和收缩的段 ,由栈帧组成,系统会为当前调用的函数分配一个栈帧.栈帧中存储了函数的局部变量.实参.返回值
 - 堆 (heap) 是在可运行时为变量动态进行内存分配的一块区域
-#### 虚拟内存管理
+### 虚拟内存管理
 linux 同现代很多内核一样,采用了虚拟内存管理技术,该技术利用了大多数程序访问的访问局部性,以求cpu和RAM资源.大多程序都展现了两种类型的局部性
 - 空间局部性: 是指程序倾向与访问在最近访问过的内存地址附近的内存,
 - 时间局部性: 是指程序倾向于在不久的将来再次访问最近刚访问过的内存地址(由于循环)
@@ -1211,14 +1211,14 @@ linux 同现代很多内核一样,采用了虚拟内存管理技术,该技术利
 
 为支持这种方式，__内核需要为每个进程维护一张页表__ 该页表描述了每页在进程虚拟地址空间中的位置 页表中的每个条目,要么指出一个虚拟页面在RAM中的位置,要么表明其当前驻留在磁盘上.
 
-#### 栈和栈帧
+### 栈和栈帧
 函数的调用和返回使栈的增长和收缩呈现性.栈驻留在内存的高端并向下增长,专用寄存器--栈指针.用于跟踪当前的栈顶.每次调用时,会在栈上新分配一帧,每当函数返回,则会从栈上将此帧移去
 每当函数调用 则会为其分配栈帧,(递归调用自己同理)
-#### 环境变量
+### 环境变量
 大多数shell通过`export`命令向环境中添加变量
 在哪进程创造时,会继承父进程的环境变量,二者通过环境变量来通信,在子进程创建后,二这可以更改各自的环境变量,而不会对对方在成影响
 
-##### 在程序中访问环境变量
+#### 在程序中访问环境变量
 C 语言中,可以使用`char **environ`访问环境列表,(environ)与(argv)参数类似指向一个以NULL结尾的指针列表,每个指针又指向一个以空字符结尾的字符串
 此外 还可以同过声明main函数的参数列表来访问环境列表
 `int main(int argc, char ** argv,char **envp)`
@@ -1229,7 +1229,7 @@ char *getenv(const char *name);
 ```
 返回相应的字符串指针
 如果指定 SHELL 为参数 name，那么将返回/bin/bash。如果不存在指定名称的环境变量，那么 getenv()函数将返回 NULL
-##### 修改环境
+#### 修改环境
 ```c
 #include<stdlib.h>
 int putenv(char* string);
@@ -1244,7 +1244,7 @@ int setenv(const char *name,const char *value,int overwrite);
 ```
 setenv()函数为形如 name=value 的字符串分配一块内存缓冲区，并将 name 和 value 所指向的字符串复制到此缓冲区，以此来创建一个新的环境变量。注意，不需要（实际上，是绝对不要）在 name 的结尾处或者 value 的开始处提供一个等号字符，因为 setenv()函数会在向环境添加新变量时添加等号字符。
 
-#### 执行非局部跳转
+### 执行非局部跳转
 setjmp()_和_longjmp()
 在一个深度嵌套的函数调用中发生了错误，需要放弃当前任务，从多层函数调用中返回
 ```c
@@ -1305,14 +1305,14 @@ main
 2. 从函数x()中返回.
 3. 调用函数y(),使用env变量调用longjmp()函数
 ***这是一个严重错误，因为 longjmp()调用不能跳转到一个已经返回的函数中***。思考一下，在这种情况下，longjmp()函数会对栈打什么主意—尝试将栈解开，恢复到一个不存在的栈帧位置，这无疑将引起混乱。如果幸运的话，程序会一死（crash）了之。然而，取决于栈的状态，也可能会引起调用与返回间的死循环，而程序好像真地从一个当前并未执行的函数中返回了。（在多线程程序中有与之相类似的滥用，在线程某甲中调用 setjmp()函数，却在线程某乙中调用 longjmp()。）
-### 进程的创建
-#### fork() exit() wait() execve()的简介
+## 进程的创建
+### fork() exit() wait() execve()的简介
 - fork()函数允许一进程创建一新进程.具体的子进程为父进程的拷贝,子进程拥有父进程的栈,数据段,堆,和执行文本段.
 - **exit(status)函数**,终止一个进程将进程的所有资源归还内核,交给其进行再次分配.参数status为一整型变量,表示进程的退出状态.父进程可以用wait()函数来获取该状态
 - **wait(&status)函数** 目的有二 如果子进程未调用exit()函数 那么wait函数会挂起父进程直到子进程终止;其二子进程的终止状态通过exit()函数返回
 - 系统调用execve(pathname,argv,envp)加载一个新程序路径名为pathname,参数列表为argv,envp)到当前进程的内存。这将丢弃现存的文本段，并为新程序重新创建栈、数据段、堆。这一操作通常称为执行一个新程序。
 
-#### fork()
+### fork()
 创建一个新的子进程 
 ```c
 #include<unistd.h>
@@ -1324,9 +1324,9 @@ fork()在父进程中返回0
 在子进程中返回子进程的进程ID(pid_t)  
     - //fork()创建失败后返回-1
 **调用 fork()之后，系统将率先“垂青”于哪个进程（即调度其使用 CPU），是无法确定的，意识到这一点极为重要。在设计拙劣的程序中，这种不确定性可能会导致所谓“竞争条件（racecondition）”的错误**，24.2 节会对此做进一步说明 
-##### 父子进程之间的文件共享
+#### 父子进程之间的文件共享
 父子进程之间共享文件属性的妙用屡见不鲜.父子进程同时写入一文件,共享文件偏移量会确保二者不会覆盖彼此的输出内容. 但这并不能阻止进程之间的输入混乱, 若要规避这一现象 需要进行进程同步.比如父进程可以调用wait()来暂停运行 
-##### vfork()//不建议?
+#### vfork()//不建议?
 ```c
 pid_t vfork(void );
 ```
@@ -1336,11 +1336,11 @@ fork()和vfork()区别
 - vfork()产生的子进程不应调用 exit()退出，因为这会导致对父进程 stdio 缓冲区的刷新和关闭
 除非速度绝对重要的场合，新程序应当舍 vfork()而取 fork()。原因在于，当使用写时复制语义实现 fork()（大部分现代 UNIX 实现皆是如此）时，在速度几近于 vfork()的同时，又避免了 vfork()的上述怪异行止
 
-### 进程的终止
-#### exit()和_exit()
+## 进程的终止
+### exit()和_exit()
 exit()函数会进行系统调用_exit() 并且exit()会关闭当前进程的所有文件描述符  
 
-### fork().stdio缓冲区以及_exit()之间的交互
+## fork().stdio缓冲区以及_exit()之间的交互
 ```cpp
 #include<stdio.h>
 int main(int argc,char ** argv)
@@ -1375,9 +1375,9 @@ hello world
 write()的输出并未出现两次 是因为write()调用会将数据直接传给内核缓冲区 在进行fork()时 不会复制这部分缓冲
 write()的输出结果先于printf()而出现，是因为 write()会将数据立即传给内核高速缓存，而 printf()的输出则需要等到调用 exit ()刷新 stdio 缓冲区时
 
-### 监控子进程
-#### 等待子进程
-##### 系统调用wait()
+## 监控子进程
+### 等待子进程
+#### 系统调用wait()
 系统调用wait()等待调用进程的任一子进程终止,同时在参数status所指的缓冲区中返回该子进程的终止状态.
 ```c
 #include<sys/wait.h>
@@ -1396,7 +1396,7 @@ if(errno!=ECHILD)
     errexit(errno);
 ```
 如上代码将等待所有子进程退出后执行后续代码
-##### 系统调用waitpid()
+#### 系统调用waitpid()
 wait()调用有着诸多限制,设计waitpid()则避免了这些限制
 1. 父进程已经创建了诸多子进程 ,wait将无法等待某个特定子进程的完成 ,只能顺序等待
 2. 没有子进程退出,wait()总是保持阻塞. 有时会希望执行非阻塞的等待.
@@ -1425,7 +1425,7 @@ pid_t waitpid(pid_t pid,int *status,int options);
 5. WIFSTOPPED (status)：**如果子进程处于暂停执行情况则此宏值为真**. **一般只有使用WUNTRACED时才会有此情况**.    
 6.  WSTOPSIG  (status)：取得引发子进程暂停的信号代码, 一般会先用WIFSTOPPED 来判断后才使用此宏.  
 
-#### wait() 和waitpid() 的区别
+### wait() 和waitpid() 的区别
 
 - wait等待第一个终止的子进程，而waitpid可以通过pid参数指定等待哪一个子进程。当pid=-1、option=0时，waitpid函数等同于wait，可以把wait看作waitpid实现的特例。  
 - waitpid函数提供了wait函数没有提供的三个功能：
@@ -1433,7 +1433,7 @@ pid_t waitpid(pid_t pid,int *status,int options);
     2. waitpid提供了一个 wait的非阻塞版本，有时希望取得一个子进程的状态， 但不想进程阻塞。
     3. waitpid支持作业控制。
 
-##### 等待状态值
+#### 等待状态值
 wait()和waitpid()返回的status的值,可以用来区分以下子进程.
 - 子进程exit退出终止
 - 子进程受到未处理信号而终止
@@ -1503,7 +1503,7 @@ wait()和waitpid()返回的status的值,可以用来区分以下子进程.
 
  ```
 
-#### 从信号处理程序中终止程序
+### 从信号处理程序中终止程序
 默认情况下某些信号会终止进程,有时希望在进程终止前执行一些清理步骤. 为此可以处理程序来捕捉这些信号,随即执行清理步骤 但若这么做 父进程 依然可以通过wait()和waitpid()获得到子进程的终止状态 **如子程序获取信号后** **调用_exit** **则在父进程中监控的程序状态则为正常终止的**
 
 如果需要通知父进程自己因某个信号而终止，那么子进程的信号处理程序应首先将自己废除，然后再次发出相同信号，该信号这次将终止这一子进程。信号处理程序需包含如下代码
@@ -1514,9 +1514,10 @@ void handler(int sig)
     signal(sig, SIG_DFL);
     raise(sig);
 }
-```
 
-#### 僵尸进程
+ ```
+
+### 僵尸进程
 子进程若不被父进程wait()退出 
 则会释放大部分进程资源,只保留进程表中的信息. 转化为僵尸进程 
 
@@ -1526,7 +1527,7 @@ void handler(int sig)
 在一个父进程长期存在的程序中 
 若存在大量僵尸进程 则会占满进程表 届时将无法创建进程
 
-#### SIGCHLD建立信号处理程序
+### SIGCHLD建立信号处理程序
 无论一个子进程于何时终止 系统都会向父进程发送SIGCHLD信号
 我们可在父进程中针对SIGCHLD信号编写处理僵尸进程的信号处理程序
 
@@ -1537,7 +1538,7 @@ void handler(int sig)
 通常SIGCHLD处理程序都简单的由以下代码组成 **/仅捕获已终止子进程而不关心其退出状态**
 `while(waitpid(-1,NULL,WNOHANG)>0);`
 
-### 程序的执行
+## 程序的执行
 exec()族关系
 |前4位|第五位  |第六位|
 |-|--|--|
@@ -1613,7 +1614,7 @@ int main(int argc, char **argv)
 
 对打开文件的处理与每个描述符的exec关闭标志值有关，进程中每个文件描述符有一个exec关闭标志（FD_CLOEXEC），若此标志设置，则在执行exec时关闭该描述符，否则该描述符仍打开。除非特地用fcntl设置了该标志，否则系统的默认操作是在exec后仍保持这种描述符打开，利用这一点可以实现I/O重定向。
 
-### 一个system()的自主实现
+## 一个system()的自主实现
 不进行信号屏蔽版**shell.0.0.2.c**
 ```c
 int my_system(char *command)
@@ -1719,7 +1720,7 @@ int my_system(const char *command)
     return status;
 }
 ```
-#### 为什么要在执行system()函数时进行信号屏蔽
+### 为什么要在执行system()函数时进行信号屏蔽
 - **在system()内部正确处理信号**
 给 system()的实现带来复杂性的是对信号的正确处理。
 
@@ -1733,8 +1734,8 @@ int my_system(const char *command)
 引发了 **竞争状态** 
 所以 要进行信号**SIGCHLD**的屏蔽
 
-## 线程
-### 概述
+# 线程
+## 概述
 在多线程程序中,多个线程并发自同一程序.
 - 所有线程共享相同的全局变量和堆变量,
 - **但**每个线程都有用来存放局部变量的私有栈,
@@ -1749,7 +1750,10 @@ int my_system(const char *command)
 
 进阶信息 
 更多的线程概念
+## 线程调用
 ### pthreads API
+
+
 数据类型| 描述
 -      |     --
 **pthread_t** | 线程ID
@@ -1760,6 +1764,7 @@ int my_system(const char *command)
 **pthread_key_t** | 线程特有数据的键
 **pthread_once_t** |一次性初始化控制上下文
 **pthread_attr_t** | 线程的属性对象
+
 
 - **关于errno**
 在线程中 每个线程总会有属于自己的errno;
@@ -1792,12 +1797,323 @@ int my_system(const char *command)
 int pthread_create(pthread_t *thread ,const pthread_attr_t *attr,void*(*start)(void*),void*arg);
 
 ```
-新线程通过调用带有`arg`参数的`start(arg)`而开始执行
+- **新线程通过调用带有`arg`参数的`start(arg)`而开始执行**
 调用`pthread_create()`的线程将通过之前的编码进行执行
 参数`arg`是`void*`类型意在可以将任意对象的指针传给`start()`函数,一般来说 其指向一个全局或者堆变量 也可以是NULL 如果需要传递多个参数 可以将`arg`指向一个结构 该结构的各个字段对应于带传参的参数.通过谨慎的类型强制转换 `arg`甚至可以传递int类型的值
-> 严格来说 对于int和void*之间的强制转换 大部分编译器是允许的 
-> 即`int j == (int)((void*)j)`
 
->?? 没看明白
-> 
-> 将经强制转换的整型数作为线程 start 函数的返回值时，必须小心谨慎。原因在于，取消线程（见第 32 章）时的返回值 PTHREAD_CANCELED，通常是由实现所定义的整型值，再经强制转换为 void*。若线程某甲的 start 函数将此整型值返回给正在执行 pthread_join()操作的线程某乙，某乙会误认为某甲遭到了取消。应用如果采用了线程取消技术并选择将 start 函数的返回值强制转换为整型，那么就必须确保线程正常结束时的返回值与当前 Pthreads 实 现 中 的PTHREAD_CANCELED 不同。如欲保证程序的可移植性，则在任何将要运行该应用的实现中，
+  - > 严格来说 对于int和void*之间的强制转换 大部分编译器是允许的 
+      > 即`int j == (int)((void*)j)`
+
+  - >?? 没看明白
+    >     
+      > 将经强制转换的整型数作为线程 start 函数的返回值时，必须小心谨慎。原因在于，取消线程（见第 32 章）时的返回值 PTHREAD_CANCELED，通常是由实现所定义的整型值，再经强制转换为 void*。若线程某甲的 start 函数将此整型值返回给正在执行 pthread_join()操作的线程某乙，某乙会误认为某甲遭到了取消。应用如果采用了线程取消技术并选择将 start 函数的返回值强制转换为整型，那么就必须确保线程正常结束时的返回值与当前 Pthreads实现中的 PTHREAD_CANCELED 不同。如欲保证程序的可移植性，则在任何将要运行该应用的实现中
+
+- 参数`thread`指向`pthread_t`类型的缓冲区进行初始化 
+    后续将通过thread变量来引用该线程
+
+- 在线程执行之前 ,实现无需对pthread进行初始化 
+新线程在pthread_create()返回之前可能就已经开始运行 ,
+新线程若要拿到自己的线程ID 则只能通过`pthread_self()`方法
+- 参数attr是指向`pthread_attr_t`对象的指针,该对象指定了新线程的各种属性 
+  - 若attr指向NULL那么创建新线程是将使用各种默认属性,
+
+### 终止线程
+可以通过如下方式终止线程的运行
+1. 线程start()函数执行return语句并返回指定值
+2. 调用pthread_exit()结束线程
+3. 调用pthread_cancel()取消线程
+4. 任意线程调用exit(),或者主线程执行了return语句(main中)
+
+```c
+#include<pthread.h>
+
+void pthread_exit(void* retval);
+```
+- 调用pthread_exit()相当于在线程的start函数中执行return 不同之处,可以在线程**start()函数中调用的任意函数**中进行`pthread_exit()函数`进行结束线程
+- 参数`retval`指定了线程返回值,**retval指向的内容不应该在线程栈中**. **应在堆区或全局作用域的内存块中**
+  
+如果主函数调用了pthread_exit()函数,那么其他线程将继续进行
+
+### 线程ID
+进程内部每个线程都有一个唯一一个标识 成为线程ID 
+线程ID将返回给`pthread_create()`的调用者 
+每个线程可以通过`pthread_self()`获得自己的线程ID
+```c
+#include<pthread.h>
+pthread_t pthread_self(void);
+```
+- pthread_join(),pthread_detach(),pthread_cancel(),pthread_kill()等调用将使用线程ID 
+- 一些应用中将以线程ID作为动态数据结构的标签,即可用来识别某个数据结构的构建者或属主线程
+
+函数`pthread_equal()`函数可以判断两线程ID是否相同
+```c
+#include<pthread.h>
+int pthread_equal(pthread_t t1, pthread_t t2);
+```
+检查调用线程ID与保存在t1变量中的是否一致 可以编写如下代码
+```c
+if(pthread_equal(tid,pthread_self()))  
+    printf("tid matches self");
+```
+### 连接(joining)已终止的线程
+函数pthread_join()等待有thread标识的线程终止(如果线程已经终止,pthread_join将立即返回).这种操作被称为连接
+```c
+#include<pthread.h>
+
+int pthread_join(pthread_t thread,void **retval);
+```
+**通过`pthread_join`来获得线程的返回值**
+
+- 若retval为一非空指针,将会保存线程终止时返回值的拷贝,即raturn/pthread_exit()的值
+> 类似进程中 wait() 函数的意思
+> 但不能连接**任意**线程 
+>    >这一设计是为避免连接了库函数自己创造的线程
+
+线程的连接会使调用线程进入阻塞状态
+
+若线程一直不链接会和进程一直不被wait一样 逐渐占满线程表 届时将无法创建新线程//僵尸线程
+线程之间是同级的 不同于进程 只父进程wait子进程
+线程只要有线程ID 任意线程将可以连接目标线程
+
+```c
+//一个pthread的简单程序
+#include<pthread.h>
+static void* threadFunc(void *arg)
+{
+    char *s=(char *)arg;
+
+    printf("%s",s);
+    return (void*)strlen(s);
+}
+int main(int argc,char ** argv)
+{
+    pthread_t t1;
+    void *res;
+    int s;
+
+    s=pthread_create(&t1,NULL,threadFunc,"HelloWorld");
+    if(s!=0) errExitEN(s,"pthread_create");
+
+    printf("Message from main()\n");
+    s = pthread_join(t1,&res);
+    if(s!=0)
+        errExitEN(s,"pthread_join");
+
+    printf("Thread returned %ld\n",(long)res);
+
+    exit(EXIT_SUCCESS);
+}
+```
+### 线程的分离 
+默认时 线程是可以连接的 当线程退出时,其他线程可以通过调用pthread_jion()获得其返回值 
+若程序员不关心其返回状态 可以通过pthread_detach()并向thread参数传入指定线程的标识符,将其标记为分离状态
+```c
+#include<pthread.h>
+int pthread_detach(pthread_t thread);
+```
+例如`pthread_detach(pthread_self());`就可以实现线程自行分离 
+一但线程处于分离状态 就不能通过pthread_join()获得其退出状态,也无法使其重返"可连接"状态
+线程的分离状态 并不能逃离主函数的return或者任意线程的exit()
+
+若在主线程结束之前 分离的线程未结束 那么分离的线程将无法完成其有关任务
+
+### 线程属性
+
+- 线程具有属性，用pthread_attr_t表示，**在对该结构进行处理之前必须进行初始化**，在使用后需要对其去除初始化。
+
+- 调用pthread_attr_init之后，**pthread_t结构所包含的内容就是操作系统实现支持的线程所有属性的默认值**。
+
+- 如果要去除对pthread_attr_t结构的初始化，可以调用pthread_attr_destroy函数。如果pthread_attr_init实现时为属性对象分配了动态内存空间，pthread_attr_destroy还会用无效的值初始化属性对象，因此如果经pthread_attr_destroy去除初始化之后的pthread_attr_t结构被pthread_create函数调用，将会导致其返回错误。
+
+关于线程属性:> https://blog.csdn.net/whatday/article/details/106470715
+```c
+pthread_t thr;
+pthread_attr_t attr;
+int s;
+
+s=pthread_attr_init(&attr);
+if(s)
+    errExitEN(s,"pthread_attr_init");
+
+s = pthread_attr_setdetachstate(&attr,PTHREAD_CREATE_DETACHED);
+if(s)
+    errExitEN(s,"pthread_attr_setdetachstate");
+
+s = pthread_create(&thr,&attr,threadFun,(void*)1);
+if(s)
+    errExitEN(s,"pthread_create");
+
+s = pthread_destroy(&attr);
+if(s)
+    errExitEN(s,"pthread_destroy");
+```
+
+
+### 进程VS线程
+进程和线程如何选择
+1. 线程之间的数据共享很简单
+2. 线程的创建要快于进程 进程之间的数据共享需要更多的投入 (创建共享内存段或者使用管道)
+3. 多线程编程时 需要确保调用线程安全的函数,或者以线程安全的方式来调用函数
+4. 某个线程的bug可能会危及该进程的所有线程(某个错误的指针修改了内存) 进程不会 
+5. 一般来讲 建议在多线程程序中,避免使用信号 进程无所谓
+
+## 线程同步
+两个工具 - 互斥量 - 条件变量
+目的: 避免两个线程同时对同一数据段进行修改
+### 互斥量
+**保护对共享变量的访问**
+在多线程程序编译时,可以使用互斥操作 使线程对共享内存进行原子访问
+
+互斥量有两种状态:
+- 已锁定 和 未锁定
+任何时候 至多只有一个线程可以锁定该互斥量.试图重复加锁可能阻塞线程或者报错(取决于加锁的方法)
+
+一旦线程锁定了互斥量,随即成为了该互斥量的所有者.只有所有者才能给互斥量解锁 有时会使用术语**获取**和**释放**来代替加锁和解锁
+对每一线程 会使用不同的互斥量,每一线程在访问同一资源时将采取如下协议.
+- 针对共享资源锁定互斥量
+- 访问共享资源
+- 对互斥量进行解锁
+#### 声明互斥量
+```c
+static pthread_mutex_t name = PTHREAD_MUTEX_INITIALIZER;
+//pthread_mutex_initializer //meaning:初始设定项
+```
+
+#### 加锁和解锁互斥量
+```c
+#include <pthread.h>
+int pthread_mutex_lock(pthread_mutex_t *mutex);
+int pthread_mutex_unlock(pthread_mutex_t *mutex);
+```
+一个 有关互斥量的程序 输出是`glob = 20000000`
+```c
+#include<pthread.h>
+
+static int glob=0;
+static pthread_mutex_t mtxOfGlob = PTHREAD_MUTEX_INITIALIZER//initializer //meaning:初始设定项
+
+static void * 
+threadFunc(void* arg)
+{
+    int loops = *(int *)arg;
+    int loc,j,s;
+
+    for(j=0;j<loops;j++)
+    {
+        s = pthread_mutex_lock(&mtxOfGlob);//获取全局变量
+        if(s)   errExitEN(s,"pthread_mutex_lock");
+        
+        loc = glob;
+        loc++;
+        glob =loc;
+
+        s = pthread_mutex_unlock(&mtxOfGlob);//释放全局变量
+        if(s)   errExitEN(s,"pthread_mutex_unlock");
+
+    }
+    return NULL;
+}
+int 
+main(int argc,char ** argv)
+{
+    pthread_ t1,t2;
+    int loops,s;
+    loops = (argc>1)?getInt(argv[1],GN_GT_0,"num-loops"):10000000;
+
+    s= pthread_create(&t1,NULL,threadFunc,&loops);
+    if(s)errExitEN(s,"pthread_create");
+    s = pthread_create(&t2,NULL,threadFunc,&loops);
+    if(s)errExitEN(s,"pthread_create");
+
+    s=pthread_join(&t1,NULL);
+    if(s)errExitEN(s,"pthread_join");
+    s = pthread_join(&t2,NULL);
+    if(s)errExitEN(s,"pthread_join");
+
+    printf("glob = %d\n ", glob);
+    exit(EXIT_SUCCESS);
+}
+```
+- `pthread_mutex_trylock()`
+  - 如果共享数据段已被获取 那么`pthread_mutex_trylock()`会返回EBUSY错误
+  - 若处于释放状态 则`pthread_mutex_trylock()`和`pthread_mutex_lock()`行为一致;
+
+#### 线程死锁
+线程1 对t1数据进行锁定 并且请求锁定t2
+同时线程2 对t2数据锁定 请求锁定t1
+
+两线程同时阻塞 的情况称为线程死锁
+
+- 陷入死锁的条件
+（1）**互斥条件**：线程(进程)对于所分配到的资源具有排它性，即一个资源只能被一个线程(进程)占用，直到被该线程(进程)释放
+（2）**请求与保持条件**：一个线程(进程)因请求被占用资源而发生阻塞时，对已获得的资源保持不放。
+（3）**不剥夺条件**：线程(进程)已获得的资源在末使用完之前不能被其他线程强行剥夺，只有自己使用完毕后才释放资源。
+（4）**循环等待条件**：当发生死锁时，所等待的线程(进程)必定会形成一个环路（类似于死循环），造成永久阻塞
+- **how to solve**
+  - 破坏请求与保持条件
+    - 一次性申请所有的资源。
+  - 破坏不剥夺条件
+    - 占用部分资源的线程进一步申请其他资源时，如果申请不到，可以主动释放它占有的资源。
+  - 破坏循环等待条件
+    - 靠按序申请资源来预防。按某一顺序申请资源，释放资源则反序释放。破坏循环等待条件。
+
+#### 动态初始化互斥量
+静态初始值PTHREAD_MUTEX_INITIALIZER,只能初始化:经由静态分配且携带默认属性 
+其他情况下 必须调用`pthread_mutex_init()`对互斥量进行初始化
+```c
+#include<pthread.h>
+int pthread_mutex_init(pthread_mutex_t *mutex,const pthread_mutexattr_t *attr);
+```
+对于一下情况 必须使用**init()**
+- 动态分配在堆区中的互斥量. 动态创建针对于对某一结构的链表,表中每个结构都包含一个pthread_mutex_t类型的字段来存放互斥量,借以保护对该结构的访问
+- 互斥量是在栈中分配的自动变量;
+- 初始化经由静态分配,且不使用默认属性的互斥量
+
+#### 销毁互斥量
+对于不再需要互斥量时 需要用pthread_mutex_destory()进行销毁
+```c
+#include<pthread.h>
+int pthread_mutex_destory(pthread_mutex_t *mutex);
+```
+#### 互斥量的属性/attr
+在pthread_mutex_init()的attr可以规定为以下的值
+- PTHREAD_NUTEX_NORMAL
+此类型的mutex不具有自检功能,线程对自己锁定的数据进行锁定时将陷入自锁
+解锁未锁定状态或其他线程锁定的互斥量 将导致不确定的结果
+- PTHREAD_NUTEX_ERRORCHECK
+此类互斥量的所用操作都将执行错误检查 上述的三个行为都将进行报错 此类互斥量运行时较慢 可以将其作为调试工具 以发现程序那里违反了互斥量基本原则
+- PTHREAD_NUTEX_RECURSIVE
+"递归互斥量" 其自身有一计数器 可以重复加锁和解锁 加锁计数器+1 解锁-1 仅当其计数器=0时 才会释放该互斥量
+
+
+### 条件变量/通知状态的改变
+条件变量的主要操作是发送信号和等待
+**发送信号操作即通知一个或多个等待状态的线程**,某个共享变量的状态已经改变.
+等待操作是指在收到一个通知前一直处于阻塞状态
+
+#### 静态变量分配的条件变量
+```c
+pthread_cond_t name = PTHREAD_COND_INITIALIZER
+```
+#### 通知和等待条件变量
+```c
+#include<pthread.h>
+
+int pthread_cond_signal(pthread_cond_t *cond);
+int pthread_cond_broadcast(pthread_cond_t *cond);
+int pthread_cond_wait(pthread_cond_t *cond,pthread_mutex_t *mutex);
+
+```
+pthread_cond_wait()函数将阻塞一线程直到收到条件变量cond的通知
+pthread_cond_signal()只保证唤醒至少一条遭到阻塞的线程(针对cond)
+pthread_cond_broadcast()将唤醒所有遭阻塞的线程.(针对cond)
+
+
+
+
+
+
+
+
+
+

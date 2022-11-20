@@ -101,3 +101,6 @@ $ git symbolic-ref HEAD #查看HEAD指向(如果是引用)
 主要有两种方法用来撤销变更 —— 一是 `git reset`，还有就是 `git revert`
 git reset + `目标`--在本地删除目标下的子节点
 `git reset HEAD^ `删除HEAD下的所有子节点
+
+git revert `***`- 撤销更改并分享给别人 
+换句话 -- 提交一次更改,这次更改的内容是回退到`***`位置;
