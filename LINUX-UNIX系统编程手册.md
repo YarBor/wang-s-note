@@ -1880,7 +1880,9 @@ int my_system(const char *command)
 
 
 - 编译 Pthreads 程序
-在 Linux 平台上，在编译调用了 Pthreads API 的程序时，需要设置 **cc-pthread** 的编译选项。使用该选项的效果如下。
+
+!!! 在 Linux 平台上，在编译调用了 Pthreads API 的程序时，需要设置 **cc-pthread** 的编译选项。使用该选项的效果如下。
+
     - 定义_REENTRANT 预处理宏。这会公开对少数可重入（reentrant）函数的声明。
     - 程序会与库 libpthread 进行链接（等价于-lpthread）。
 
@@ -2204,12 +2206,16 @@ pthread_cond_wait()函数将阻塞一线程直到收到条件变量cond的通知
 pthread_cond_signal()只保证唤醒至少一条遭到阻塞的线程(针对cond)
 pthread_cond_broadcast()将唤醒所有遭阻塞的线程.(针对cond)
 
+- pthread_cond_signal()在单一生产者、单一消费者时适用
+- pthread_cond_broadcase()在 单一生产者(或多生产者)多消费者 / 生产者一次能产生多个商品时适用
 
+在pthread_cond_wait()中 pthread_cond_wait()函数是默认其函数调用的互斥量在之前执行的过程中是上锁的 (对与其之中的参数mutex而言)
+wait()调用中 首先将函数调用互斥量解锁 将此线程休眠 当通过sign或者broadcase唤醒时 将解锁互斥量 若解锁失败 将继续休眠 直到解锁成功    
 
+```c
+#include<pthread.h>
 
-
-
-
-
-
-
+int pthread_timedwait(pthread_cond_t *cond, pthread_mutex_t * mutex,const struct timespec *abstime);
+        return 0 on success, or error number on error
+```
+timewait()和wait()的区别在于 由abstime参数来指定一个线程等待条件变量休眠时间的上限
