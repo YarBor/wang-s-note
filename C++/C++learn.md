@@ -150,8 +150,8 @@ const string * pstr = new string[100];
 - 指针和const的关系
 ```c++
 int a = 1;
-const int *b = &a;
-int * const c = &a;
+const int *b = &a;  // 底层const
+int * const c = &a; // 顶层const
 
 int h;
 b = &h;
@@ -161,8 +161,8 @@ c = &h; // error
 (*b)++; // error 
 
 ```
-顶层const指针--不能通过指针改变指向数据的值 但可以改变指针的指向
-底层const指针--可以通过指针改变指向数据的值 但不能改变指针的指向
+底层const指针--不能通过指针改变指向数据的值 但可以改变指针的指向
+顶层const指针--可以通过指针改变指向数据的值 但不能改变指针的指向
 ```c++
 const int f = 1;
 const int * ff = &f;
@@ -174,13 +174,17 @@ int * const ffff = &f;  //error
 - typedef 定义的`指针`别名是常量
 ```c++
 typedef char * wsad;// !! w 是一个指针常量 》> 底层const
+// wsad a;         // 不允许改变 a 的值（a是指针）
+```
+!!! 1 a 是一个指针常量 >> 底层const----不允许改变 a 的值(a是指针)
+```c++
 int main(int argc, char** argv)
 {
     char aa = 'a';
     char r = 'r';
     
                  wsad a = &aa; 
-// 相当于 char * const a = &aa;
+// 相当于 const (char *) a = &aa;
 
     (*a)++;// OK
     
