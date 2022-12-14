@@ -42,8 +42,13 @@ https://nettee.github.io/posts/2018/Understanding-lvalues-and-rvalues-in-C-and-C
 
 引用常量时要创建常量引用`const int & "name"` 
 #### 引用和函数
-1. 不要返回局部变量的引用
-2. 传参可以使用引用接受(指针、变量都可)
+1. 尽量不要返回局部变量的引用（包括函数的形参）
+   - 当函数返回值为引用时, 若返回局部变量，不能成为其它引用的初始值，不能作为左值使用
+    相当于仅仅返回值（右值）
+
+
+2. 返回函数的引用形参作为引用, 可成为其他引用的初始值, 也可以作为左值, 也可作为右值
+   - 传参可以使用引用接受(指针、变量都可)
    ```C
     void change(int *&a, int &b)
     {
@@ -60,5 +65,143 @@ https://nettee.github.io/posts/2018/Understanding-lvalues-and-rvalues-in-C-and-C
         //            11            11          0
     }改变了指针指向 改变了变量b的大小（未通过传输指针） 
    ```
-   用引用为参数时 即对传入变量内存进行访问、修改
-3. 
+   用引用为参数时 即对传入**变量内存进行访问、修改**
+3. 返回静态变量 或 全局变量的引用, 可成为其他引用的初始值, 也可以作为左值, 也可作为右值
+
+---
+   
+### const关键字
+https://www.cnblogs.com/jiabei521/p/3335676.html
+常类型是指使用类型修饰符const说明的类型，常类型变量或是对象的值是不能被更新的。
+
+const修饰符可以把对象转变成常数对象，
+意思就是说利用const进行修饰的变量的值在程序的任意位置将不能再被修改，就如同常数一样使用！
+任何修改该变量的尝试都会导致编译错误
+
+**因为常量在定义之后就不能修改，所以const对象在定义时就必须初始化：**
+对于**类中的const成员变量必须通过初始化列表进行初始化**，如下所示：
+```c++
+class A
+{
+public:
+  A(int i);
+  void print();
+  
+  const int &r;
+private:
+  const int a;
+  static int b;
+};
+
+const int A::b=10;//类列表初始化
+
+A::A(int i):a(i),r(a)//类列表初始化
+{
+}
+```
+- **const对象默认为文件作用域** 
+```c++
+//在全局的const变量
+int const a = 10;
+//仅仅在当前文件有效
+
+// 若要在整个文件中使用当前定义的常量
+// 需要在定义时加上extren关键字
+extern const int BufferSize = 1024;
+// 如此这个buffersize对整个程序可见
+```
+- const 对象的引用
+```c++
+const int n = 16;
+const int &nl = n;//合法
+int &nll = n;     //error
+
+int f = 0;
+const int &fl = f;
+const int &fll = f + n;
+```
+> 非const引用只能绑定到与该引用相同类型的对象。 const引用则可以绑定到不同但相关的类型的对象或绑定到右值。
+```c++
+double a = 0.01;
+
+const int &aa = a;
+//合法 仅有整数位
+
+int &aaa = a;
+//不合法 报错
+// 若不报错 在后续代码中万一修改了 aaa 对 a 的影响是未知的
+```
+
+- const对象的动态数组  
+如果我们在自由存储区中创建的数组存储了内置类型的const对象，则必须为这个数组提供初始化： 因为数组元素都是const对象，无法赋值。实现这个要求的唯一方法是对数组做值初始化
+```c++
+const int * p = new const int[100]
+// error
+
+const int * p2 = new const int[100]()
+// OK
+```
+- C++允许定义类类型的const数组，但该类类型必须提供默认构造函数：
+```c++
+const string * pstr = new string[100];
+// 这里便会调用string类的默认构造函数初始化数组元素。
+```
+
+- 指针和const的关系
+```c++
+int a = 1;
+const int *b = &a;
+int * const c = &a;
+
+int h;
+b = &h;
+c = &h; // error
+
+(*c)++;
+(*b)++; // error 
+
+```
+顶层const指针--不能通过指针改变指向数据的值 但可以改变指针的指向
+底层const指针--可以通过指针改变指向数据的值 但不能改变指针的指向
+```c++
+const int f = 1;
+const int * ff = &f;
+const int * const fff = &f;
+int * const ffff = &f;  //error
+```
+对于const对象 不能通过底层const指针指向 编译器报error
+
+- typedef 定义的`指针`别名是常量
+```c++
+typedef char * wsad;// !! w 是一个指针常量 》> 底层const
+int main(int argc, char** argv)
+{
+    char aa = 'a';
+    char r = 'r';
+    
+                 wsad a = &aa; 
+// 相当于 char * const a = &aa;
+
+    (*a)++;// OK
+    
+    a = r;//error
+}
+
+```
+
+### constexpr 
+> 常量表达式：是指值不会改变的、并且在编译时期就可以计算得到结果的式子。
+  
+> 在C++中const可以由常量表达式进行声明 也可以用函数返回值进行声明（不确定的数）
+> {即const的声明不一定用常量表达式}
+> {即在运行时才会拿到结果}
+
+constexpr 变量 
+C++ 允许将变量声明为`constexpr`类型 以便由编译器来验证变量的值是否为一个常量表达式
+**声明为 constexpr 类型的变量必须由常量进行初始化**
+
+constexpr关键字只能用于修饰`字面值类型`（such：int、char、int *，int & 都属于）
+不能修饰自定义类
+
+**特别的 返回值为`constexpr`关键字修饰时 函数将隐式声明为`inline`类型**
+        
