@@ -10,7 +10,18 @@
 
 在声明中，**变量的数据类型是已知的**	在定义中，**存储在变量中的值是指定的**。
 
-### 2. 左值和右值
+
+### 2. 引用
+引用不是定义一个新变量,而是给变量取一个别名,编译器不会为引用变量开辟内存空间,它和它引用的变量共用一块内存空间
+- 引用变量的类型必须与它的实体类型一致
+- 引用变量使用必须进行初始化
+- 一个变量可以有多个引用
+- 一旦引用一个实体,在不能引用其他实体(别名叫混了就ji)
+- 引用不是指针
+
+引用常量时要创建常量引用`const int & "name"` 
+
+#### 左值和右值
 https://nettee.github.io/posts/2018/Understanding-lvalues-and-rvalues-in-C-and-C/
 <!-- 左值是可寻址的 ,具有持久性
 而右值一般是不可寻址的常量,或在表达式求值中创建的无名临时对象,短暂性的.
@@ -32,17 +43,33 @@ https://nettee.github.io/posts/2018/Understanding-lvalues-and-rvalues-in-C-and-C
   int &&z3 = x * 6; // 正确，右值引用
   int &&z4 = x; // 错误，x是一个左值
   ```
-### 引用
-引用不是定义一个新变量,而是给变量取一个别名,编译器不会为引用变量开辟内存空间,它和它引用的变量共用一块内存空间
-- 引用变量的类型必须与它的实体类型一致
-- 引用变量使用必须进行初始化
-- 一个变量可以有多个引用
-- 一旦引用一个实体,在不能引用其他实体(别名叫混了就ji)
-- 引用不是指针
+- 常量左值可以引用右值
+虽然 C++98/03 标准不支持为右值建立非常量左值引用，但允许使用常量左值引用操作右值。也就是说，常量左值引用既可以操作左值，也可以操作右值
+```cpp
+int num = 10;
+const int &b = num;
+const int &c = 10;
+```
+##### C++右值引用
+https://www.internalpointers.com/post/c-rvalue-references-and-move-semantics-beginners
+C++0x 引入了一种称为右值引用&&的新类型，通过在某些类型后放置一个双符号来表示。这样的右值引用可以让你修改临时对象的值：就像const在上面第二行中删除属性一样！
 
-引用常量时要创建常量引用`const int & "name"` 
+让我们玩一下这个新玩具：
+```cpp
+  std::string   s1     = "Hello ";
+  std::string   s2     = "world";
+  std::string&& s_rref = s1 + s2;    // the result of s1 + s2 is an rvalue
+  s_rref += ", my friend";           // I can change the temporary string!
+  std::cout << s_rref << '\n';       // prints "Hello world, my friend"
+```
+在这里，我创建了两个简单的字符串s1和s2。我加入他们并将结果（一个临时字符串，即右值）放入std::string&& s_rref. Nows_rref是对临时对象的引用，或右值引用。它const周围没有，所以我可以根据需要自由修改临时字符串。如果没有右值引用及其双符号符号，这是不可能的。为了更好地区分它，我们将传统的 C++ 引用（单与号引用）称为左值引用。
+
+乍一看，这似乎毫无用处。然而，右值引用为移动语义的实现铺平了道路，移动语义是一种可以显着提高应用程序性能的技术。
+
+##### 移动语意（学完「类」来看）
+https://www.internalpointers.com/post/c-rvalue-references-and-move-semantics-beginners
 #### 引用和函数
-1. 尽量不要返回局部变量的引用（包括函数的形参）
+1. 返回局部变量的引用时无法作为左值使用（包括函数的形参）
    - 当函数返回值为引用时, 若返回局部变量，不能成为其它引用的初始值，不能作为左值使用
     相当于仅仅返回值（右值）
 
@@ -80,7 +107,7 @@ const修饰符可以把对象转变成常数对象，
 
 **因为常量在定义之后就不能修改，所以const对象在定义时就必须初始化：**
 对于**类中的const成员变量必须通过初始化列表进行初始化**，如下所示：
-```c++
+```cpp
 class A
 {
 public:
@@ -100,7 +127,7 @@ A::A(int i):a(i),r(a)//类列表初始化
 }
 ```
 - **const对象默认为文件作用域** 
-```c++
+```cpp
 //在全局的const变量
 int const a = 10;
 //仅仅在当前文件有效
@@ -111,7 +138,7 @@ extern const int BufferSize = 1024;
 // 如此这个buffersize对整个程序可见
 ```
 - const 对象的引用
-```c++
+```cpp
 const int n = 16;
 const int &nl = n;//合法
 int &nll = n;     //error
@@ -121,7 +148,7 @@ const int &fl = f;
 const int &fll = f + n;
 ```
 > 非const引用只能绑定到与该引用相同类型的对象。 const引用则可以绑定到不同但相关的类型的对象或绑定到右值。
-```c++
+```cpp
 double a = 0.01;
 
 const int &aa = a;
@@ -134,7 +161,7 @@ int &aaa = a;
 
 - const对象的动态数组  
 如果我们在自由存储区中创建的数组存储了内置类型的const对象，则必须为这个数组提供初始化： 因为数组元素都是const对象，无法赋值。实现这个要求的唯一方法是对数组做值初始化
-```c++
+```cpp
 const int * p = new const int[100]
 // error
 
@@ -142,13 +169,13 @@ const int * p2 = new const int[100]()
 // OK
 ```
 - C++允许定义类类型的const数组，但该类类型必须提供默认构造函数：
-```c++
+```cpp
 const string * pstr = new string[100];
 // 这里便会调用string类的默认构造函数初始化数组元素。
 ```
 
 - 指针和const的关系
-```c++
+```cpp
 int a = 1;
 const int *b = &a;  // 底层const
 int * const c = &a; // 顶层const
@@ -163,7 +190,7 @@ c = &h; // error
 ```
 底层const指针--不能通过指针改变指向数据的值 但可以改变指针的指向
 顶层const指针--可以通过指针改变指向数据的值 但不能改变指针的指向
-```c++
+```cpp
 const int f = 1;
 const int * ff = &f;
 const int * const fff = &f;
@@ -172,12 +199,12 @@ int * const ffff = &f;  //error
 对于const对象 不能通过底层const指针指向 编译器报error
 
 - typedef 定义的`指针`别名是常量
-```c++
+```cpp
 typedef char * wsad;// !! w 是一个指针常量 》> 底层const
 // wsad a;         // 不允许改变 a 的值（a是指针）
 ```
 !!! 1 a 是一个指针常量 >> 底层const----不允许改变 a 的值(a是指针)
-```c++
+```cpp
 int main(int argc, char** argv)
 {
     char aa = 'a';
@@ -209,3 +236,4 @@ constexpr关键字只能用于修饰`字面值类型`（such：int、char、int 
 
 **特别的 返回值为`constexpr`关键字修饰时 函数将隐式声明为`inline`类型**
         
+## \<string\>
