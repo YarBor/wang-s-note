@@ -237,3 +237,83 @@ constexpr关键字只能用于修饰`字面值类型`（such：int、char、int 
 **特别的 返回值为`constexpr`关键字修饰时 函数将隐式声明为`inline`类型**
         
 ## \<string\>
+```cpp
+#include<string>
+using std::string;
+```
+### 定义和初始化string
+```cpp
+string s1;
+string s2(s1); //通过 s1 的数据直接初始化 s2
+string s2 = s1;//向 s2 拷贝 s1
+string s3 = "hello world";// 拷贝
+string s3("hello world");// 直接初始化
+string s4(10,'w');// s4 == “wwwwwwwwww”
+```
+### string对象的操作
+```cpp
+string s()// 创建string s
+os<<s//将s 写到输出流os中 返回os
+is>>s//从is(输入流) 读取字符串到赋给 s ,字符串以空白字符分割 返回is 
+getline(is,s)//从is 读入一行到s
+s.empty()//将s晴空
+s.size()//返回s串的长度
+s1+s2
+s1=s2
+s1+=s2
+s1==s2
+< > <= >= != // 返回0/1 以字典序比较
+```
+string对象在读入的时候·会自动忽略串前面的空格
+输入`“    hhh     ”`时 string对象只会储存 `“hhh”`
+
+- getline(「输入流」，「string对象」);
+  getline()遇到换行符停止，并丢弃换行符，将剩余数据存入string对象
+  getline 不会忽略每次读入的空字符 仅仅靠`\n`分割。
+
+- string.size()返回无符号数
+
+- 在声明时 不能将两个字面值常量进行相加 · 
+  ```cpp
+  string s = " wang "; 
+  string a = "fads" + "asfd" + s;//error
+  string c = "fasdf" + ("wang" + s);//OK
+  string b = string("fads") + "asfd" + s;//OK
+  ```
+
+#### 对于string的for遍历
+- `for (declaration : expression) { statements }`
+  
+```cpp
+string strings("fasdf"); 
+for(auto x:strings) //这里的x是临时拷贝 // x-type: char 
+  /* codings */
+
+  // 这里对x的修改无法对string对象内的字符造成影响
+
+
+for(auto &x:strings) //这里的x是引用 // x-type: char 
+  /* codings */
+```
+
+- 下标遍历
+
+`for(decltype(strings.size()) i = 0;i < strings.size();i++)`
+
+## <vector\>
+```cpp
+#include<vector>
+using std::vector;
+```
+### 定义和初始化
+```cpp
+vector<type> v1; // 创建一个空的容器
+vector<type> v2(v1); // v2 中包含 v1 的所有副本
+vector<type> v2 = v1; // 等价上面那个
+vector<type> v3(m,value); // v3 中包含了 m 个 值为value的type类
+vector<type> v4(i) // v4 中包含了 i 个默认初始化的type类
+vector<type> v5{1,2,3,5} //v5 中包含了初始值依次为括号内部的值的类
+vector<type> v5 = {1,2,3,5} // 等价上一个
+```
+使用「圆括号」则其数据使用来构造的
+使用「大括号」则其数据是直接初始化的
