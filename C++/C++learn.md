@@ -213,8 +213,7 @@ int main(int argc, char** argv)
                  wsad a = &aa; 
 // 相当于 const (char *) a = &aa;
 
-    (*a)++;// OK
-    
+    (*a)++;// OK    
     a = r;//error
 }
 
@@ -283,7 +282,7 @@ string对象在读入的时候·会自动忽略串前面的空格
 
 #### 对于string的for遍历
 - `for (declaration : expression) { statements }`
-  
+
 ```cpp
 string strings("fasdf"); 
 for(auto x:strings) //这里的x是临时拷贝 // x-type: char 
@@ -305,6 +304,14 @@ for(auto &x:strings) //这里的x是引用 // x-type: char
 #include<vector>
 using std::vector;
 ```
+1.顺序序列
+顺序容器中的元素按照严格的线性顺序排序。可以通过元素在序列中的位置访问对应的元素。
+
+2.动态数组
+支持对序列中的任意元素进行快速直接访问，甚至可以通过指针算述进行该操作。提供了在序列末尾相对快速地添加/删除元素的操作。
+
+3.能够感知内存分配器的（Allocator-aware）
+容器使用一个内存分配器对象来动态地处理它的存储需求。
 ### 定义和初始化
 ```cpp
 vector<type> v1; // 创建一个空的容器
@@ -317,3 +324,87 @@ vector<type> v5 = {1,2,3,5} // 等价上一个
 ```
 使用「圆括号」则其数据使用来构造的
 使用「大括号」则其数据是直接初始化的
+
+但如果大括号内的数据不能用于列表初始化类 则其数据将用来构造
+```cpp
+vector<string> v5{10};//将创建有用10个默认初始化的strings的容器
+```
+### 向vector内添加元素
+```cpp
+string word;
+vector<string> text;
+while (cin>>word)
+  text.push_back(word)
+```
+增加函数
+```cpp
+void push_back(const T& x):向量尾部增加一个元素X
+iterator insert(iterator it,const T& x):向量中迭代器指向元素前增加一个元素x
+iterator insert(iterator it,int n,const T& x):向量中迭代器指向元素前增加n个相同的元素x
+iterator insert(iterator it,const_iterator first,const_iterator last):向量中迭代器指向元素前插入另一个相同类型向量的`[first,last)`间的数据
+```
+
+删除函数
+```cpp
+iterator erase(iterator it):删除向量中迭代器指向元素
+iterator erase(iterator first,iterator last):删除向量中[first,last)中元素
+void pop_back():删除向量中最后一个元素
+void clear():清空向量中所有元素
+```
+
+遍历函数
+```cpp
+reference at(int pos):返回pos位置元素的引用
+reference front():返回首元素的引用
+reference back():返回尾元素的引用
+iterator begin():返回向量头指针，指向第一个元素
+iterator end():返回向量尾指针，指向向量最后一个元素的下一个位置
+reverse_iterator rbegin():反向迭代器，指向最后一个元素
+reverse_iterator rend():反向迭代器，指向第一个元素之前的位置
+```
+
+判断函数
+```cpp
+bool empty() const:判断向量是否为空，若为空，则向量中无元素
+```
+
+大小函数
+```cpp
+int size() const:返回向量中元素的个数
+int capacity() const:返回当前向量所能容纳的最大元素值
+int max_size() const:返回最大可允许的vector元素数量值
+```
+
+其他函数
+```cpp
+void swap(vector&):交换两个同类型向量的数据
+void assign(int n,const T& x):设置向量中前n个元素的值为x
+void assign(const_iterator first,const_iterator last):向量中[first,last)中元素设置成当前向量元素
+```
+
+### 迭代器(iterable)
+迭代器（iterator）是一种可以遍历容器元素的数据类型。迭代器是一个变量，相当于容器和操纵容器的算法之间的中介。
+C++更趋向于使用迭代器而不是数组下标操作，因为标准库为每一种标准容器（如vector、map和list等）定义了一种迭代器类型，而只有少数容器（如vector）支持数组下标操作访问容器元素。可以通过迭代器指向你想访问容器的元素地址，通过*x打印出元素值。
+这和我们所熟知的指针极其类似。
+
+C语言有指针，指针用起来十分灵活高效。
+C++语言有迭代器，迭代器相对于指针而言功能更为丰富。
+
+vector，是数组实现的，也就是说，只要知道数组的首地址，就能访问到后面的元素。所以，我们可以通过访问vector的迭代器来遍历vector容器元素。
+List，是链表实现的，我们知道，链表的元素都存储在一段不是连续的地址空间中。我们需要通过next指针来访问下一个元素。那么，我们也可以通过访问list的迭代器来实现遍历list容器元素。
+
+```cpp
+std::vector<int> ::iterator it;     //it能读写vector<int>的元素
+std::vector<int>::const_iterator it;//it只能读vector<int>的元素，不可以修改vector<int>中的元素
+```
+
+```cpp
+for(it = vector.begin(); it != vector.end(); ++it)
+  cout << *it << endl;
+```
+
+
+
+
+
+
