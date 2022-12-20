@@ -601,3 +601,75 @@ std::range_error	|当尝试存储超出范围的值时，会抛出该异常。
 std::underflow_error|	当发生数学下溢时，会抛出该异常。
 
 ## class struct
+http://c.biancheng.net/view/2235.html
+C++中保留了C中的struct关键字，并加以扩充。
+> 在C中 struct只能包含成员变量，不能包含成员函数
+> 在Cpp中 struct类似class,既可以包含成员变量，又可以包含成员函数。
+
+Cpp中的struct和class基本是通用的，唯有几个细节不同：
+- 使用class时，类中的成员默认都是private属性的；而使用struct时，结构体中的成员默认都是public属性的。
+- **class继承默认是private继承，而struct默认是punlic继承**
+- class可以使用模板，而struct不能
+
+**在编写C++代码时，我强烈建议使用 class 来定义类，而使用 struct 来定义结构体，这样做语义更加明确。**
+
+### 类中的const
+```cpp
+#include <iostream>
+#include <string>
+class MyClassMate
+{
+public:
+	std::string getname() const { return name; }
+	std::string setname(std::string names)
+	{
+		name = names;
+		return name;
+	}
+	float gethigh() const;
+	float sethigh(float highs);
+
+private:
+	std::string name;
+	float high;
+};
+float MyClassMate::gethigh() const
+{
+	using namespace std;
+	return MyClassMate::high;
+}
+float MyClassMate::sethigh(float highs)
+{
+	using namespace std;
+	MyClassMate::high = highs;
+	return highs;
+}
+int main(int argc, char **argv)
+{
+	using namespace std;
+	class MyClassMate a;
+	string name("wang");
+	a.setname(name);
+	a.sethigh(1.8);
+	cout << a.getname() << endl;
+	cout << a.gethigh() << endl;
+}
+```
+`const`意在不改变class中`private`成员
+并且 **const对象只能调用const函数**
+在类之外定义的常量函数也要带上`const`关键字
+
+同时 **定义的函数是否为常量函数也同时影响函数重载**
+```cpp
+class a {
+public:
+  int fun() const{;} //1
+  int fun(){;}       //2
+}
+```
+当 const对象调用时会调用1 非const对象调用时会调用2
+
+1）const成员函数可以访问非const对象的非const数据成员、const数据成员，也可以访问const对象内的所有数据成员；
+2）非const成员函数可以访问非const对象的非const数据成员、const数据成员，但不可以访问const对象的任意数据成员；
+3）作为一种良好的编程风格，在声明一个成员函数时，若该成员函数并不对数据成员进行修改操作，应尽可能将该成员函数声明为const 成员函数。
+
