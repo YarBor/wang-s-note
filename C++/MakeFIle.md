@@ -178,7 +178,7 @@ make的工作方式
    vpath %.c hello
    vpath %.c hhh：www
    ```
-   该语句表示.c文件先在foo目录 后在hello目录 然后在hhh目录 最后在www目录
+   该语句表           示.c文件先在foo目录 后在hello目录 然后在hhh目录 最后在www目录
    vpath同样支持`：`分割路径
 
 ---
