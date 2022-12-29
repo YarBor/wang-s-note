@@ -104,3 +104,22 @@ git reset + `目标`--在本地删除目标下的子节点
 
 git revert `***`- 撤销更改并分享给别人 
 换句话 -- 提交一次更改,这次更改的内容是回退到`***`位置;
+
+- 删除某一次的commit
+  `git rebase -i 「节点」`
+  将需要删除的commit 前的pick 改为drop
+   
+
+
+- 贮藏修改
+  https://git-scm.com/book/zh/v2/Git-%E5%B7%A5%E5%85%B7-%E8%B4%AE%E8%97%8F%E4%B8%8E%E6%B8%85%E7%90%86
+  `git stash` / `git stash push`
+  将当前的修改贮藏 类似压入栈中
+
+  查看时可以用`git stash list`进行查看
+
+  并通过`git stash apply` / `git stash apply satsh@{2}`将刚刚的贮藏重新应用 或者通过`git stash pop` 来应用并且丢弃贮藏
+
+- 通过 `git pull`实现拉取操作
+  `git pull --rebase`将以上游为准 忽略本地commit的不同 直接进行覆盖操作
+  `git pull --no-rebase` 将以本地为准 忽略上游和本地commit的不同 进行覆盖「上游」
