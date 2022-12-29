@@ -117,11 +117,9 @@ git revert `***`- 撤销更改并分享给别人
   将当前的修改贮藏 类似压入栈中
 
   查看时可以用`git stash list`进行查看
-
   并通过`git stash apply` / `git stash apply satsh@{2}`将刚刚的贮藏重新应用 
   或者通过`git stash pop` 来应用并且丢弃贮藏 
   或只通过`git stash drop「name」`来丢弃
-
 
 - 通过 `git pull`实现拉取操作
   `git pull --rebase`将以上游为准 忽略本地commit的不同 直接进行覆盖操作
