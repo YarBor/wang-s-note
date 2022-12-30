@@ -124,3 +124,7 @@ git revert `***`- 撤销更改并分享给别人
 - 通过 `git pull`实现拉取操作
   `git pull --rebase`将以上游为准 忽略本地commit的不同 直接进行覆盖操作
   `git pull --no-rebase` 将以本地为准 忽略上游和本地commit的不同 进行覆盖「上游」
+
+- 合并修改
+https://backlog.com/git-tutorial/cn/stepup/stepup2_7.html
+进入产生冲突的文件中 不论是 `vim` 还是 `code` 将文件中的冲突解决 进行`git add 「target file」` 再次进行`commit`即可
