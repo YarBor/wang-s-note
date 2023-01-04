@@ -27,7 +27,7 @@ https://nettee.github.io/posts/2018/Understanding-lvalues-and-rvalues-in-C-and-C
 而右值一般是不可寻址的常量,或在表达式求值中创建的无名临时对象,短暂性的.
 左值和右值的唯一区别是左值可以被修改,右值不能 -->
 
-- 左值 (lvalue, locator value) 表示了一个占据内存中某个可识别的位置（也就是一个地址）的对象。  
+- 左值 (lvalue, locator value) 表示了一个占据内存中某个可识别的位置(也就是一个地址)的对象。  
 - 右值 (rvalue) 则使用排除法来定义。一个表达式不是 左值 就是 右值 。 那么，右值是一个 不 表示内存中某个可识别位置的对象的表达式。
 
 - 左值引用和右值引用
@@ -62,16 +62,16 @@ C++0x 引入了一种称为右值引用&&的新类型，通过在某些类型后
   s_rref += ", my friend";           // I can change the temporary string!
   std::cout << s_rref << '\n';       // prints "Hello world, my friend"
 ```
-在这里，我创建了两个简单的字符串s1和s2。我加入他们并将结果（一个临时字符串，即右值）放入std::string&& s_rref. Nows_rref是对临时对象的引用，或右值引用。它const周围没有，所以我可以根据需要自由修改临时字符串。如果没有右值引用及其双符号符号，这是不可能的。为了更好地区分它，我们将传统的 C++ 引用（单与号引用）称为左值引用。
+在这里，我创建了两个简单的字符串s1和s2。我加入他们并将结果(一个临时字符串，即右值)放入std::string&& s_rref. Nows_rref是对临时对象的引用，或右值引用。它const周围没有，所以我可以根据需要自由修改临时字符串。如果没有右值引用及其双符号符号，这是不可能的。为了更好地区分它，我们将传统的 C++ 引用(单与号引用)称为左值引用。
 
 乍一看，这似乎毫无用处。然而，右值引用为移动语义的实现铺平了道路，移动语义是一种可以显着提高应用程序性能的技术。
 
-##### 移动语意（学完「类」来看）
+##### 移动语意(学完「类」来看)
 https://www.internalpointers.com/post/c-rvalue-references-and-move-semantics-beginners
 #### 引用和函数
-1. 返回局部变量的引用时无法作为左值使用（包括函数的形参）
+1. 返回局部变量的引用时无法作为左值使用(包括函数的形参)
    - 当函数返回值为引用时, 若返回局部变量，不能成为其它引用的初始值，不能作为左值使用
-    相当于仅仅返回值（右值）
+    相当于仅仅返回值(右值)
 
 
 2. 返回函数的引用形参作为引用, 可成为其他引用的初始值, 也可以作为左值, 也可作为右值
@@ -90,7 +90,7 @@ https://www.internalpointers.com/post/c-rvalue-references-and-move-semantics-beg
         change(hhh, b);
         std::cout << *hhh << " " << b << " " << a << std::endl;
         //            11            11          0
-    }改变了指针指向 改变了变量b的大小（未通过传输指针） 
+    }改变了指针指向 改变了变量b的大小(未通过传输指针) 
    ```
    用引用为参数时 即对传入**变量内存进行访问、修改**
 3. 返回静态变量 或 全局变量的引用, 可成为其他引用的初始值, 也可以作为左值, 也可作为右值
@@ -201,7 +201,7 @@ int * const ffff = &f;  //error
 - typedef 定义的`指针`别名是常量
 ```cpp
 typedef char * wsad;// !! w 是一个指针常量 》> 底层const
-// wsad a;         // 不允许改变 a 的值（a是指针）
+// wsad a;         // 不允许改变 a 的值(a是指针)
 ```
 !!! 1 a 是一个指针常量 >> 底层const----不允许改变 a 的值(a是指针)
 ```cpp
@@ -222,7 +222,7 @@ int main(int argc, char** argv)
 ### constexpr 
 > 常量表达式：是指值不会改变的、并且在编译时期就可以计算得到结果的式子。
   
-> 在C++中const可以由常量表达式进行声明 也可以用函数返回值进行声明（不确定的数）
+> 在C++中const可以由常量表达式进行声明 也可以用函数返回值进行声明(不确定的数)
 > {即const的声明不一定用常量表达式}
 > {即在运行时才会拿到结果}
 
@@ -230,7 +230,7 @@ constexpr 变量
 C++ 允许将变量声明为`constexpr`类型 以便由编译器来验证变量的值是否为一个常量表达式
 **声明为 constexpr 类型的变量必须由常量进行初始化**
 
-constexpr关键字只能用于修饰`字面值类型`（such：int、char、int *，int & 都属于）
+constexpr关键字只能用于修饰`字面值类型`(such：int、char、int *，int & 都属于)
 不能修饰自定义类
 
 **特别的 返回值为`constexpr`关键字修饰时 函数将隐式声明为`inline`类型**
@@ -310,7 +310,7 @@ using std::vector;
 2.动态数组
 支持对序列中的任意元素进行快速直接访问，甚至可以通过指针算述进行该操作。提供了在序列末尾相对快速地添加/删除元素的操作。
 
-3.能够感知内存分配器的（Allocator-aware）
+3.能够感知内存分配器的(Allocator-aware)
 容器使用一个内存分配器对象来动态地处理它的存储需求。
 ### 定义和初始化
 ```cpp
@@ -383,8 +383,8 @@ void assign(const_iterator first,const_iterator last):向量中[first,last)中�
 ```
 
 ### 迭代器(iterable)
-迭代器（iterator）是一种可以遍历容器元素的数据类型。迭代器是一个变量，相当于容器和操纵容器的算法之间的中介。
-**C++更趋向于使用迭代器而不是数组下标操作，因为标准库为每一种标准容器（如vector、map和list等）定义了一种迭代器类型，而只有少数容器（如vector）支持数组下标操作访问容器元素。**可以通过迭代器指向你想访问容器的元素地址，通过*x打印出元素值。
+迭代器(iterator)是一种可以遍历容器元素的数据类型。迭代器是一个变量，相当于容器和操纵容器的算法之间的中介。
+**C++更趋向于使用迭代器而不是数组下标操作，因为标准库为每一种标准容器(如vector、map和list等)定义了一种迭代器类型，而只有少数容器(如vector)支持数组下标操作访问容器元素。**可以通过迭代器指向你想访问容器的元素地址，通过*x打印出元素值。
 这和我们所熟知的指针极其类似。
 
 C语言有指针，指针用起来十分灵活高效。
@@ -397,8 +397,10 @@ C++语言有迭代器，迭代器相对于指针而言功能更为丰富。
 
 
 #### 迭代器的使用
-> https://blog.csdn.net/weixin_47700137/article/details/119251703?ops_request_misc=%257B%2522request%255Fid%2522%253A%2522167126453216782395356136%2522%252C%2522scm%2522%253A%252220140713.130102334..%2522%257D&request_id=167126453216782395356136&biz_id=0&utm_medium=distribute.pc_search_result.none-task-blog-2~all~top_positive~default-1-119251703-null-null.142^v68^control,201^v4^add_ask,213^v2^t3_esquery_v1&utm_term=%E8%BF%AD%E4%BB%A3%E5%99%A8&spm=1018.2226.3001.4187
+```
+https://blog.csdn.net/weixin_47700137/article/details/119251703?ops_request_misc=%257B%2522request%255Fid%2522%253A%2522167126453216782395356136%2522%252C%2522scm%2522%253A%252220140713.130102334..%2522%257D&request_id=167126453216782395356136&biz_id=0&utm_medium=distribute.pc_search_result.none-task-blog-2~all~top_positive~default-1-119251703-null-null.142^v68^control,201^v4^add_ask,213^v2^t3_esquery_v1&utm_term=%E8%BF%AD%E4%BB%A3%E5%99%A8&spm=1018.2226.3001.4187
 
+```
 容器都有成员begin和end，其中begin成员复制返回指向第一个元素的迭代器，end指向容器尾部元素的下一个位置的迭代器。
 
 迭代器的定义
@@ -481,7 +483,7 @@ int main()
     cout << a << endl;
 }
 ```
-> begin（）在这里返回数组的地址 ？// 函数重载 //
+> begin()在这里返回数组的地址 ？// 函数重载 //
 上述vector容器中的元素和数组的元素一致
 
 ## 数组
@@ -657,7 +659,7 @@ int main(int argc, char **argv)
 ```
 `const`意在不改变class中`private`成员
 并且 **const对象只能调用const函数**
-在类之外定义的常量函数也要带上`const`关键字
+在类之外定义的常量函数也要带上`const`关键字 
 
 同时 **定义的函数是否为常量函数也同时影响函数重载**
 ```cpp
@@ -669,7 +671,391 @@ public:
 ```
 当 const对象调用时会调用1 非const对象调用时会调用2
 
-1）const成员函数可以访问非const对象的非const数据成员、const数据成员，也可以访问const对象内的所有数据成员；
-2）非const成员函数可以访问非const对象的非const数据成员、const数据成员，但不可以访问const对象的任意数据成员；
-3）作为一种良好的编程风格，在声明一个成员函数时，若该成员函数并不对数据成员进行修改操作，应尽可能将该成员函数声明为const 成员函数。
+1)const成员函数可以访问非const对象的非const数据成员、const数据成员，也可以访问const对象内的所有数据成员；
+2)非const成员函数可以访问非const对象的非const数据成员、const数据成员，但不可以访问const对象的任意数据成员；
+3)作为一种良好的编程风格，在声明一个成员函数时，若该成员函数并不对数据成员进行修改操作，应尽可能将该成员函数声明为const 成员函数。
 
+
+**作为cpp的类&对象中 最重要的是所谓的OOP的思想**
+
+### 友元
+类的友元定义在类的外部,但有权访问类的私有(private)成员和保护(protected)成员。
+尽管友元在类的定义中出现了，但友元并不是成员。
+
+友元可以是一个函数，成为友元函数。友元同时也可以是一个类，称为友元类，友元类的所以成员都是该类的友元。
+
+- 如果要声明函数成为一个类的友元，需要在类定义中该函数原型前使用关键字friend：
+
+```cpp
+
+#include <iostream>
+using namespace std;
+class Box
+{
+	double width;
+
+public:
+	friend void printWidth(Box box);
+	void setWidth(double width);
+};
+
+void Box::setWidth(double wid){
+	this->width = wid;
+}
+
+void printWidth(Box box){
+	cout << "width is " << box.width << endl;
+	// 因为是类的友元，所以可以直接访问类的private成员
+}
+
+int main(int argc, char* argv[]){
+	Box box;
+	box.setWidth(10.0);
+	printWidth(box);
+	return 0;
+}
+```
+
+
+### 类的构造函数
+- 类的构造是类的一种特殊成员函数，他会在每次创建类的新对象时进行。
+
+构造函数的名称和类的名称是相同的，并且不会返回任何类型，也不会返回void。构造函数可用于某些成员变量设置初始值。
+```cpp
+#include<iostream>
+using namespace std;
+
+class Line{
+public :
+  void setLine(int len){len = lenth;};
+  double getLine(){return lenth;};
+  Line(int len);//构造函数
+
+private: 
+  int lenth;
+};
+
+Line::Line(int len){
+  this->lenth=len;//在初始化时间执行，
+}
+```
+- 列表初始化
+```cpp
+#include <iostream>
+using namespace std;
+
+class Line{
+public:
+  Line(int len,int wide,int high,int low):length(len),high(high),wide(wide),low(low){
+    //codes
+    //codes
+    //codes
+    //codes
+  }
+private:
+  int length,high,wide,low;
+};
+
+```
+类的构造函数同样支撑函数重载；
+
+```cpp
+class Sales_data{
+  public:
+  Sales_data()=default;
+  Sales_data(const std::string &a):X(a){}
+  Sales_data(const std::string &a,int b,unsigned c):X(a),Y(b),Z(c){}
+  std::string X;
+  int Y=0;
+  unsigned Z=0;
+}
+
+```
+
+
+### 析构函数
+和构造函数类似，析构函数在类被del时进行，
+析构函数名和类的名字相同，只是在前加上`～`作为前缀
+析构函数有助于跳出程序(关闭文件、释放内存)前释放资源。
+```cpp
+
+#include <iostream>
+ 
+using namespace std;
+ 
+class Line
+{
+   public:
+      void setLength( double len ){};
+      double getLength( void ){};
+      Line(){};   // 这是构造函数声明
+      ~Line(){};  // 这是析构函数声明
+ 
+   private:
+      double length;
+};
+ 
+```
+### 类的其他特性
+
+```cpp
+class Screen {
+public:
+  typedef std::string::size_type pos;
+  Screen()=default;
+  Screen(pos ht,pos wd,char c):height(ht),width(wd),contents(ht*wd,c){};
+  char get() const { return contents[cursor];}
+  inline char get(pos ht,pos wd)const ;
+  Screen &move(pos r,pos e);
+private:
+  pos cursor = 0;// cursor n.光标
+  pos height = 0;
+  pos width = 0;
+  std::string contents;//contents n.内容
+};
+```
+
+- 关于内联函数 可以显式定义也可隐式定义 ：定义在函数体内部的函数是隐式内联函数 ，定义在类外部的函数不是「除非显式使用inline」
+- `Screen() = default` 因为我们在类中定义了一个构造函数，所以如果要编译器自动生成·默认的构造函数· 则需要「 = default」  
+
+
+- 可变数据成员「mutable」
+  ```cpp
+  class Screen {
+    public:
+      void some_member() const;
+    private:
+      mutable size_t access_ctr;//即使在一个const对象内也可以修改
+  };
+  void Screen::some_member()const{
+    ++(this->access_ctr);//简单计数器 记录被调用次数
+  }
+  ```
+  一个**可变数据成员**将永远不会之const,即使它是const对象的成员。
+  一个const对象依旧可以改变其内部的「mutable」成员
+
+- 返回*this的成员函数
+```cpp
+class Screen{
+  public: 
+    Screen &set(char);
+    Screen &set(pos,pos,char);
+    // 其他成员一样
+};
+inline Screen & Screen::set(char c)
+{
+  contents[cursor]=c;
+  return *this;
+}
+inline Screen & Screen::set(pos r,pos col,char ch)
+{
+  contents[r*width+col]=ch;
+  return *this;
+}
+```
+> **和move操作一样，set函数的返回值是引用，这意味着函数的返回是左值的。若函数返回的为非引用，则返回的是调用对象this的副本「临时拷贝」**
+
+- 基于const的重载
+```cpp
+class Screen {
+  public:
+    Screen & display(std::ostream &os)
+                          {do_display(os);return *this;}
+    const Screen & display(std::ostream &os) const 
+                          {do_display(os);return *this;}
+  private:
+    void do_display(std::ostream &os) const
+      { os << contents; }
+} 
+```
+我们希望调用display时是const操作 但又希望可以`screen.set('*').display(cout).move(10,10).set('#');`此类的连续访问操作
+所以针对const进行重载 并且在private成员中定义了「do_display()」函数进行真正的display。
+> 这里的display们都是隐式的inline函数，所以他们并不会拥有所谓的函数调用的开销
+
+- 关于友元 「**我友元的友元 · 不是我的友元**」
+  友元类必须在「我」之前声明
+
+- 在构造函数中「列表构造」 编译器将根据类中的变量名称出现的顺序进行初始化而不是根据列表的顺序 
+## IO
+- CPP IO 类型
+  - iostream
+    - istream，wistream 从流读入数据
+    - ostream，wostream 向流写入数据
+    - iostream，wiostream 读写流
+  - fstream
+    - ifstream，wifstream 从文件读取数据
+    - ofstream，wofstream 向文件写入数据
+    - fstream，wfstream 读写文件
+  - sstream
+    - istringstream，wistringstream 从string读取数据
+    - ostringstream，wostringstream 从string写入数据
+    - stringstream，wstringstream 读写string
+  
+IO类型因为有继承机制和模板，我们可以忽略不同流之间的差异，均可以通过`>> `进行读取数据
+
+- **IO对象无拷贝或赋值**
+  ```cpp
+  ofstream out1, out2;
+  out1 = out2;          //错误： 不能对流对象赋值
+  ofstream print(out1); //错误：不能初始化 ofstream 参数
+  out2 = print(out2);   //错误：不能拷贝流对象
+  ```
+  不能拷贝 不能将形参和返回类型设置为流类型。
+  **进行IO操作的函数通常以引用的方式进行传递和返回流**。
+  读写一个IO对象会改变其状态，因此传递和返回的引用不能是const的
+
+
+- 条件状态
+  5个状态标志位：
+  - strm::iostate --- iostate 是一种机器相关的类型，提供表达条件状态的完整功能
+  - strm::badbit --- strm::badbit 用来标识流已经崩溃。
+  - strm::failbit --- strm::failbit 用来标识一个IO操作失败
+  - strm::eofbit --- strm::eofbit 用来指出流已经到达了文件结束
+  - strm::goodbit --- strm::goodbit 用来指出流未处于错误状态，此值保证为0
+
+  查询流状态的接口
+  - s.eof()  --- 若s的`eofbit`置位 return True
+  - s.fail()  --- 若s的`failbit 或 badbit`置位 return True
+  - s.bad() --- 若s的`badbit`置位 return True
+  - s.good() --- 若流s处于有效状态 返回true
+  - s.clear() --- 将流s中的所有条件状态复位，将流的状态设置为有效 返回void
+  - s.clear(flags) --- 将流s的状态按照flag进行复位，flags的类型为strm::iostate 返回void
+  - s.setstate(flags) --- 将流s的状态按照flag进行复位，flags的类型为strm::iostate 返回void 
+  - s.rdstate() 返回流s当前的状态，返回的类型为strm::iostate
+
+- 缓冲 
+  - 刷新缓冲区
+    endl操纵符 完成换行并刷新缓冲区的工作。
+    flush 刷新缓冲区，不输出任何字符
+    ends 向缓冲区插入一个空字符，然后刷新缓冲区
+    ```cpp
+    cout << "***" << endl;
+    cout << "***" << flush;
+    cout << "***" << ends; 
+    ```
+  - unitbuf 操纵符
+如果我们想在每次输出操作之后，都刷新缓冲区，我们可以使用 unitbuf 操纵符。它告诉流，在接下里的每次写操作之后，都进行一次flush操作，而 nounitbuf 操纵符可以将流的刷新缓冲机制重置，回到正常的状态。
+    ```cpp
+    cout << unitbuf;//设置无缓冲
+    cout << nounitbuf;//设置有缓冲
+    ```
+> 警告：如果程序崩溃，输出缓冲区不会被刷新
+- 关联流 
+  当一个输入流被关联到另一个输出流时，任何试图从输入流读入的操作都会刷新关联的输出流。标准库将`cin`和`cout`关联到一起
+  - `tie()` 函数 使输入流绑定到输出流
+     有两个重载的版本，
+    一个不带参数，返回指向输出流的指针，若无则返回空指针
+    另一个`「输入流.tie(输出流)」`进行绑定
+    - 每个输入流只能绑定一个输出流，但多个流可以绑定到一个ostream
+
+### 文件IO
+文件流： 
+ifstream、ofstream、fstream --- 读文件 、写文件 、读写文件
+
+- 创建文件流
+  文件流创建方式：
+  1. `fstream file(filename)`// 在创建文件流时 进行文件绑定
+  2. ```fstream file;file.open(filename);```  
+  3. ```fstream file;file.open(filename,mode);```  
+
+
+**文件使用结束时需要及时关闭**
+
+**当一个fstream对象离开其作用域时，与之关联的文件都会自动关闭**
+
+
+- 文件模式
+  - in(只读)、
+  - out(只写)、
+  - app(追加/每次写操作均定位到文件末尾)、
+  - ate(打开文件时定位到文件末尾)、
+  - trunc(截断文件)、
+  - binary(以二进制打开)
+
+对文件流的输入输出 和 `cout cin` 类似 使用 「 << 」即可
+
+## 容器
+<!-- /////////////////////////////////////////////////////////////////////// -->
+
+<!-- https://zhuanlan.zhihu.com/p/150838490 -->
+
+<!-- /////////////////////////////////////////////////////////////////////// -->
+STL具有容器概念和容器类型。概念是具有名称(如容器、序列容器、关联容器)的通用类别；
+容器类型是可以用于创建具体对象的模板。**以前的11个容器分别是 dupue、list、queue、priority_queue、stack、vector、map、multimap、set、multiset、bitset**。C++11新增的有**forward_list、unordere_map、unordered_multimap、unordered_set和unordered_multiset，且不将bitset视为容器，而将其视为一种独立的类型。**
+
+ 
+容器是存储其他对象的对象。被存储的对象必须是同一类型的，可以是OOP的对象，也可以是内置的类型。存储在容器中的对象归容器所有，所以当容器过期时，其内部的数据也将过期。
+
+**容器并不能存储所有对象，具体讲，其存储类型必须是*可以复制构造和可赋值的***。
+基本类型满足这些要求；同样，类定义没有将复制构造函数、赋值运算符声明为私有或保护时，也满足。
+
+> 基本容器不能保证其元素都按特定的顺序存储，也不能保证元素的顺序不变，但对概念进行改进后，则可以增加这样的保证。
+**复制构造和复制赋值以及移动构造和移动赋值之间的差别在于，复制操作保留源对象，而移动操作可修改源对象，还可能转让所有权，而不做任何复制。如果源对象是临时的，移动操作的效率将高于常规复制。**
+
+### 序列
+7种容器(deque、forward_list、list、queue、priority_queue、stack、vector)都是序列。**序列概念添加了迭代器至少是正向迭代器这样的要求**，保证了元素将按照特定顺序排列，不会在两次迭代之间发生变化。
+> 序列还要求其元素按严格的线性顺序排列，即存在第一个元素、最后一个元素，除第一个元素和最后一个元素外，每个元素前后都分别有一个元素。数组和链表都是序列，但分支结构(其中每个节点都指向两个子节点)不是。
+a[n]和a.at(n)都返回一个指向容器中第n个元素(从0开始编号)的引用。如果n落在容器的有效区间外，则a.at(n)将执行边界检查，并引发out_of_range异常。
+
+#### vector
+vector是数组的一种类表示，**它提供了自动内存管理功能**，**可以动态地改变vector对象的长度**，并随着元素的添加和删除而增大和缩小。它提供了对元素的随机访问。**在尾部添加和删除元素的时间是固定的，但在头部或中间插入或删除元素的时间复杂度是线性的。**
+
+vector还是可反转容器(reversible container)概念的模型。这增加了两个类方法：rbegin()，rend()，前者返回一个指向反转序列的第一个元素的迭代器，后者返回反转序列的超尾迭代器。
+
+**vector模板类是最简单的序列类型，除非其他类型的特殊优点能够更好的满足程序的要求，否则应默认使用这种类型。**
+
+
+
+#### deque
+
+deque模板类(在deque头文件中声明)表示双端队列(double-ended queue)，通常被简称为deque。**在STL中，其实现类似于vector容器，支持随机访问**。
+**主要区别在于，从deque对象的开始位置插入和删除元素的时间是固定的，而不像vector中那样是线性时间的**。
+所以，如果多数操作发生在序列的起始和结尾处，则应考虑使用deque数据结构。
+
+为实现deque两端执行插入和删除操作的时间为固定的这一目的，deque对象的设计比vector对象更为复杂。因此，尽管二者都对元素的随机访问和在序列中部执行线性时间的插入和删除操作，但vector容器执行这些操作是速度要快些。
+
+
+#### list
+
+list模板类(在list头文件中声明)表示双向链表。除第一个元素和最后一个元素外，每个元素都与前后的元素相连接，这意味着可以双向遍历链表。**list和vector之间关键的区别在于，list在链表中任一位置进行插入和删除的时间都是固定的**(`vector强调提供了除结尾外的线性时间的插入和删除，在结尾处，它提供了固定时间的插入和删除`)。
+
+> 因此，vector强调的是通过随机访问进行快速访问，而list强调的是元素的快速插入和删除。
+
+- 与vector相似，list也是可反转容器。
+- 与vector不同的是，list不支持数组表示法和随机访问。
+- 与矢量迭代器不同，从容器中插入和删除元素之后，链表迭代器指向元素将不变。
+
+void merge(list<T,Alloc>& x)——将链表x与调用链表合并。两个链表必须已经排序。合并后的经过排序的链表保存在调用链表中，x为空。这个函数的复杂度为线性时间。
+void remove(const T & val)——从链表中删除val的所有实例。这个函数的复杂度为线性时间。
+void sort()——使用< 运算符对链表进行排序；N个元素的复杂度为NlogN
+void splice(iterator pos,list<T,Alloc>x)——将链表x的内容插入到pos的前面，x将为空，这个函数的复杂度为固定时间
+void unique()——将连续相同的元素压缩为单个元素。这个函数的复杂度为线性时间。
+
+
+insert()和splice()之间的主要区别在于：insert()将原始区间的副本插入到目标地址，而splice()则将原始区间移动到目标地址。splice()方法执行后，迭代器仍然有效，也就是说，如果将迭代器设置为指向one中的元素，则在splice()将它重新定位到元素three后，该迭代器仍然指向相同的元素。
+注意，unique()只能将相邻的相同值压缩为单个值。
+非成员sort()函数需要随机访问迭代器，又因为快速插入的代价是放弃随机访问功能，所以不能讲非成员函数sort()用于链表。
+
+#### forward_list（C++11）
+
+C++11新增了容器类forward_list，它实现了单链表。在这种链表中，每个节点都只链接到下一个节点，而没有链接到前一个节点。因此forward_list只需要正向迭代器，而不需要双向迭代器。因此，不同于vector和list，forward_list是不可反转容器。相比于list，forward_list更简单、更紧凑，但功能也更少。
+
+#### queue
+
+queue模板类（在头文件queue（以前为queue.h）中声明）是一个适配器类。queue模板让底层类（默认为deque）展示典型的队列接口。
+
+queue模板的限制比deque更多。它不仅不允许随机访问队列元素，甚至不允许遍历队列。它把使用限制在定义队列的基本操作上，可以将元素添加到队尾、从队首删除元素、查看队首和队尾的值、检查元素数目和测试队列是否为空。
+
+#### priority_queue
+
+priority_queue模板类（在queue头文件中声明）是另一个适配器类，它支持的操作与queue相同。两者之间的主要区别在于，在priority_queue中，最大的元素被移到队首，内部区别在于，默认的底层类是vector。可以修改用于确定哪个元素放到队首的比较方式，方法是提供一个可选的构造函数参数。
+
+#### stack
+
+stack（在头文件stack（以前是stack.h）中声明）也是一个适配器类，它给底层类（默认情况下为vector）提供了典型的栈接口。
+
+stack模板的限制比vector更多。它不仅不允许随机访问栈元素，甚至不允许遍历栈。它把使用限制在定义栈的基本操作上，即可以将压入推到栈顶、从栈顶弹出元素、查看栈顶的值、检查元素数目和测试栈是否为空。
+
+#### array（C++11）
+
+并非STL容器，因为其长度是固定的。因此，array没有定义调整容器大小的操作，如push_back()和insert（），但定义了对它来说有意义的成员函数，如operator[]（）和at（）。可将很多标准STL算法用于array对象，如copy（）和for_each（）。
