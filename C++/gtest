@@ -1,0 +1,4 @@
+g++ 编译gtest时要手动链接 gtest库 
+```sh
+$ g++ **.cc -lgtest
+```
