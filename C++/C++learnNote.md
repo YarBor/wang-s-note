@@ -1059,3 +1059,18 @@ stack模板的限制比vector更多。它不仅不允许随机访问栈元素，
 #### array（C++11）
 
 并非STL容器，因为其长度是固定的。因此，array没有定义调整容器大小的操作，如push_back()和insert（），但定义了对它来说有意义的成员函数，如operator[]（）和at（）。可将很多标准STL算法用于array对象，如copy（）和for_each（）。
+
+--- 
+## 智能指针 
+`shared_ptr` 用来只能释放内存
+c++11 条款21：尽量使用std::make_unique和std::make_shared而不直接使用new
+`make_shared<T>(args)/make_unique(args)`进行初始化 
+> 细节是
+> 内部将直接使用args初始化new出的类型T 并给new出来的内存块分配智能指针  
+```cpp
+template<typename T, typename... Ts>
+std::unique_ptr<T> make_unique(Ts&&... params)
+{
+    return std::unique_ptr<T>(new T(std::forward<Ts>(params)...));
+}
+``` 
