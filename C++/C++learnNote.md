@@ -1073,4 +1073,6 @@ std::unique_ptr<T> make_unique(Ts&&... params)
 {
     return std::unique_ptr<T>(new T(std::forward<Ts>(params)...));
 }
-``` 
+```
+
+explicit 关键字 修饰类的构造函数？ 阻止编译器在构造时进行隐式类型转换
