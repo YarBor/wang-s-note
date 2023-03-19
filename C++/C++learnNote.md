@@ -585,22 +585,22 @@ int main ()
 ```
 
 
-异常 |	描述
--|-
-std::exception|	该异常是所有标准 C++ 异常的父类。
-std::bad_alloc|	该异常可以通过 new 抛出。
-std::bad_cast|	该异常可以通过 dynamic_cast 抛出。
-std::bad_typeid|	该异常可以通过 typeid 抛出。
-std::bad_exception|	这在处理 C++ 程序中无法预期的异常时非常有用。
-std::logic_error	|理论上可以通过读取代码来检测到的异常。
-std::domain_error	|当使用了一个无效的数学域时，会抛出该异常。
-std::invalid_argument	|当使用了无效的参数时，会抛出该异常。
-std::length_error	|当创建了太长的 std::string 时，会抛出该异常。
-std::out_of_range	|该异常可以通过方法抛出，例如 std::vector 和 std::bitset<>::operator[]()。
-std::runtime_error|	理论上不可以通过读取代码来检测到的异常。
-std::overflow_error|	当发生数学上溢时，会抛出该异常。
-std::range_error	|当尝试存储超出范围的值时，会抛出该异常。
-std::underflow_error|	当发生数学下溢时，会抛出该异常。
+| 异常                  | 描述                                                                      |
+| --------------------- | ------------------------------------------------------------------------- |
+| std::exception        | 该异常是所有标准 C++ 异常的父类。                                         |
+| std::bad_alloc        | 该异常可以通过 new 抛出。                                                 |
+| std::bad_cast         | 该异常可以通过 dynamic_cast 抛出。                                        |
+| std::bad_typeid       | 该异常可以通过 typeid 抛出。                                              |
+| std::bad_exception    | 这在处理 C++ 程序中无法预期的异常时非常有用。                             |
+| std::logic_error      | 理论上可以通过读取代码来检测到的异常。                                    |
+| std::domain_error     | 当使用了一个无效的数学域时，会抛出该异常。                                |
+| std::invalid_argument | 当使用了无效的参数时，会抛出该异常。                                      |
+| std::length_error     | 当创建了太长的 std::string 时，会抛出该异常。                             |
+| std::out_of_range     | 该异常可以通过方法抛出，例如 std::vector 和 std::bitset<>::operator[]()。 |
+| std::runtime_error    | 理论上不可以通过读取代码来检测到的异常。                                  |
+| std::overflow_error   | 当发生数学上溢时，会抛出该异常。                                          |
+| std::range_error      | 当尝试存储超出范围的值时，会抛出该异常。                                  |
+| std::underflow_error  | 当发生数学下溢时，会抛出该异常。                                          |
 
 ## class struct
 http://c.biancheng.net/view/2235.html
@@ -1074,5 +1074,16 @@ std::unique_ptr<T> make_unique(Ts&&... params)
     return std::unique_ptr<T>(new T(std::forward<Ts>(params)...));
 }
 ```
+---
 
 explicit 关键字 修饰类的构造函数？ 阻止编译器在构造时进行隐式类型转换
+
+---
+## 类的继承机制
+- 公有继承相当于将(基类的公有成员和保护成员)分别给予派生类的(公有成员和保护成员权限)
+
+- 保护继承相当于将(基类的公有成员和保护成员)给予派生类的(保护成员权限)
+
+- 私有继承相当于将(基类的公有成员和保护成员)给予派生类的(私有成员权限)
+
+同时 **所有类的私有成员对派生类均不可见**
